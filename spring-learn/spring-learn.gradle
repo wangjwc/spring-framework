@@ -1,0 +1,6 @@
+description = "spring-learn"
+
+dependencies {
+    compile(project(":spring-beans"))
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
