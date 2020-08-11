@@ -1,6 +1,16 @@
 description = "spring-learn"
 
 dependencies {
+    compile fileTree(dir: 'lib', include: '**/*.jar')
     compile(project(":spring-beans"))
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
+
+//tasks.withType(JavaCompile) {
+//    //enable compilation in a separate daemon process
+//    options.fork = true
+//    options.warnings = false
+//    options.incremental = true
+//    options.deprecation = true
+//
+//}

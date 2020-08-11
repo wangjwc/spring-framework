@@ -1,22 +1,30 @@
-package org.springframework.my.xml;
+package org.springframework.beans.learn;
 
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.beans.factory.xml.XmlBeanDefinitionReader;
+import org.springframework.beans.learn.beans.SampleBean;
 import org.springframework.core.io.FileSystemResource;
-import org.springframework.my.SampleBean;
+import org.springframework.core.io.Resource;
 
 /**
  * @Author : wangjingwang
- * @Date : 2020/8/10 22:27
+ * @Date : 2020/8/11 18:29
  * @Description :
  */
-public class LearnXmlBeanFactory {
-	public static void main(String[] args) {
+public class HelloTests {
+	@Test
+	public void hello() {
+		String path = System.getProperty("user.dir");
+		Resource resource = new FileSystemResource(path+"\\spring-beans\\src\\test\\java\\org\\springframework\\beans\\learn\\xml\\hello.xml");
+
 		//XmlBeanDefinitionReader // DefaultListableBeanFactory
 		DefaultListableBeanFactory registry = new DefaultListableBeanFactory();
-		XmlBeanDefinitionReader reader = new XmlBeanDefinitionReader(registry);
 
-		reader.loadBeanDefinitions(new FileSystemResource("D:\\Workspaces\\IdeaProjects\\Spring\\spring-framework\\spring-learn\\src\\main\\resources\\test.xml"));
+		XmlBeanDefinitionReader reader = new XmlBeanDefinitionReader(registry);
+		reader.loadBeanDefinitions(resource);
+
+
 		SampleBean sampleBean = (SampleBean)registry.getBean("sampleBean");
 		System.out.println(sampleBean.getTestStr());
 		System.out.println("LearnXmlBeanFactory ");
