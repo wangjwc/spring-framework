@@ -271,4 +271,4 @@ task distZip(type: Zip, dependsOn: [docsZip, schemaZip]) {
 	}
 }
 
-distZip.mustRunAfter moduleProjects.check
+//distZip.mustRunAfter moduleProjects.check

@@ -1,8 +1,8 @@
 package org.springframework.my.xml;
 
-import org.springframework.beans.factory.BeanFactory;
-import org.springframework.beans.factory.xml.XmlBeanFactory;
-import org.springframework.core.io.ClassPathResource;
+import org.springframework.beans.factory.support.DefaultListableBeanFactory;
+import org.springframework.beans.factory.xml.XmlBeanDefinitionReader;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.my.SampleBean;
 
 /**
@@ -13,9 +13,12 @@ import org.springframework.my.SampleBean;
 public class LearnXmlBeanFactory {
 	public static void main(String[] args) {
 		//XmlBeanDefinitionReader // DefaultListableBeanFactory
-		BeanFactory bf = new XmlBeanFactory(new ClassPathResource("org/springframework/my/test.xml"));
-		SampleBean sampleBean = (SampleBean) bf.getBean("sampleBean");
+		DefaultListableBeanFactory registry = new DefaultListableBeanFactory();
+		XmlBeanDefinitionReader reader = new XmlBeanDefinitionReader(registry);
+
+		reader.loadBeanDefinitions(new FileSystemResource("D:\\Workspaces\\IdeaProjects\\Spring\\spring-framework\\spring-learn\\src\\main\\resources\\test.xml"));
+		SampleBean sampleBean = (SampleBean) registry.getBean("sampleBean");
 		System.out.println(sampleBean.getTestStr());
-		System.out.println("LearnXmlBeanFactory");
+		System.out.println("LearnXmlBeanFactory ");
 	}
 }
