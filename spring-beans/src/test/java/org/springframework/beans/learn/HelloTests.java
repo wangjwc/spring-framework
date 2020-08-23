@@ -19,6 +19,12 @@ public class HelloTests {
 		Resource resource = new FileSystemResource(path+"/src/test/java/org/springframework/beans/learn/xml/hello.xml");
 
 		//XmlBeanDefinitionReader // DefaultListableBeanFactory
+		/**
+		 * 初始化factory、registry
+		 * ignoreDependencyInterface(BeanNameAware.class);
+		 * ignoreDependencyInterface(BeanFactoryAware.class);
+		 * ignoreDependencyInterface(BeanClassLoaderAware.class);
+		 */
 		DefaultListableBeanFactory registry = new DefaultListableBeanFactory();
 
 		XmlBeanDefinitionReader reader = new XmlBeanDefinitionReader(registry);
