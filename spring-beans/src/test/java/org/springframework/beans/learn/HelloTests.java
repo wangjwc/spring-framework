@@ -16,7 +16,7 @@ public class HelloTests {
 	@Test
 	public void hello() {
 		String path = System.getProperty("user.dir");
-		Resource resource = new FileSystemResource(path+"\\spring-beans\\src\\test\\java\\org\\springframework\\beans\\learn\\xml\\hello.xml");
+		Resource resource = new FileSystemResource(path+"/src/test/java/org/springframework/beans/learn/xml/hello.xml");
 
 		//XmlBeanDefinitionReader // DefaultListableBeanFactory
 		DefaultListableBeanFactory registry = new DefaultListableBeanFactory();
