@@ -24,6 +24,9 @@ public class HelloTests {
 		 * ignoreDependencyInterface(BeanNameAware.class);
 		 * ignoreDependencyInterface(BeanFactoryAware.class);
 		 * ignoreDependencyInterface(BeanClassLoaderAware.class);
+		 *
+		 * DefaultListableBeanFactory是spring注册及加载bean的默认实现
+		 *
 		 */
 		DefaultListableBeanFactory registry = new DefaultListableBeanFactory();
 

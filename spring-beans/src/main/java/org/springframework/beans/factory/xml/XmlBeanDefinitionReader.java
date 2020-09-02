@@ -325,16 +325,20 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 
 		Set<EncodedResource> currentResources = this.resourcesCurrentlyBeingLoaded.get();
 
+		// 防止重复加载资源
 		if (!currentResources.add(encodedResource)) {
 			throw new BeanDefinitionStoreException(
 					"Detected cyclic loading of " + encodedResource + " - check your import definitions!");
 		}
 
 		try (InputStream inputStream = encodedResource.getResource().getInputStream()) {
+			// org.xml.sax.InputSource
 			InputSource inputSource = new InputSource(inputStream);
 			if (encodedResource.getEncoding() != null) {
 				inputSource.setEncoding(encodedResource.getEncoding());
 			}
+
+			// 已经获取里xml的输入流，并且构造里org.xml.sax.InputSource，这里开始进入从xml中加载bean的核心逻辑
 			return doLoadBeanDefinitions(inputSource, encodedResource.getResource());
 		}
 		catch (IOException ex) {
@@ -387,7 +391,14 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 			throws BeanDefinitionStoreException {
 
 		try {
+			/*
+			 * 根据xml生成org.w3c.dom.Document
+			 */
 			Document doc = doLoadDocument(inputSource, resource);
+
+			/*
+			 注册bean信息
+			 */
 			int count = registerBeanDefinitions(doc, resource);
 			if (logger.isDebugEnabled()) {
 				logger.debug("Loaded " + count + " bean definitions from " + resource);
@@ -429,11 +440,25 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 * @see DocumentLoader#loadDocument
 	 */
 	protected Document doLoadDocument(InputSource inputSource, Resource resource) throws Exception {
-		return this.documentLoader.loadDocument(inputSource, getEntityResolver(), this.errorHandler,
-				getValidationModeForResource(resource), isNamespaceAware());
+		/*获取xml文件的验证模式（DTD、XSD)
+		* DTD和XSD都是xml正确性的验证模式
+		* DTD:	Document type definition 定义xml元素规则、元素间的关系，如元素名称、元素属性等（例如定义bean元素，以及bean元素的id、name、class等属性）,
+		* XSD:	Document schemas definition 定义xml文档结构，比如包含那些元素、元素的子元素等
+		*/
+		int validationMode = this.getValidationModeForResource(resource);
+
+		/*
+		 * 查找DTD文件（按照xml头的定义，支持从互联网下载和从应用本地查找）
+		 */
+		EntityResolver entityResolver = this.getEntityResolver();
+
+		/*读取出document*/
+		return this.documentLoader.loadDocument(inputSource, entityResolver, this.errorHandler,
+				validationMode, isNamespaceAware());
 	}
 
 	/**
+	 * 获取xml文件的验证模式（DTD、XSD)
 	 * Determine the validation mode for the specified {@link Resource}.
 	 * If no explicit validation mode has been configured, then the validation
 	 * mode gets {@link #detectValidationMode detected} from the given resource.
@@ -442,10 +467,14 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 * @see #detectValidationMode
 	 */
 	protected int getValidationModeForResource(Resource resource) {
+		/*
+			如果手工设置里验证模式，则返回手工设置的-setValidationMode
+		*/
 		int validationModeToUse = getValidationMode();
 		if (validationModeToUse != VALIDATION_AUTO) {
 			return validationModeToUse;
 		}
+		/*自动检测验证模式*/
 		int detectedMode = detectValidationMode(resource);
 		if (detectedMode != VALIDATION_AUTO) {
 			return detectedMode;
@@ -506,7 +535,11 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 * @see BeanDefinitionDocumentReader#registerBeanDefinitions
 	 */
 	public int registerBeanDefinitions(Document doc, Resource resource) throws BeanDefinitionStoreException {
+		// 实例化DefaultBeanDefinitionDocumentReader
+		// TODO	continue
 		BeanDefinitionDocumentReader documentReader = createBeanDefinitionDocumentReader();
+
+		// 记录之前BeanDefinition的加载个数
 		int countBefore = getRegistry().getBeanDefinitionCount();
 		documentReader.registerBeanDefinitions(doc, createReaderContext(resource));
 		return getRegistry().getBeanDefinitionCount() - countBefore;
