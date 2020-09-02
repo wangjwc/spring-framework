@@ -535,13 +535,17 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 * @see BeanDefinitionDocumentReader#registerBeanDefinitions
 	 */
 	public int registerBeanDefinitions(Document doc, Resource resource) throws BeanDefinitionStoreException {
-		// 实例化DefaultBeanDefinitionDocumentReader
+		// 实例化 DefaultBeanDefinitionDocumentReader
 		// TODO	continue
 		BeanDefinitionDocumentReader documentReader = createBeanDefinitionDocumentReader();
 
-		// 记录之前BeanDefinition的加载个数
+		// 记录之前BeanDefinition的加载个数（这里的registry是初始化本reader时传入的，默认是DefaultListableBeanFactory
 		int countBefore = getRegistry().getBeanDefinitionCount();
+
+		// 加载及注册bean
 		documentReader.registerBeanDefinitions(doc, createReaderContext(resource));
+
+		// 返回本次加载的BeanDefinition个数
 		return getRegistry().getBeanDefinitionCount() - countBefore;
 	}
 

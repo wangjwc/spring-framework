@@ -93,7 +93,11 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	@Override
 	public void registerBeanDefinitions(Document doc, XmlReaderContext readerContext) {
 		this.readerContext = readerContext;
-		doRegisterBeanDefinitions(doc.getDocumentElement());
+
+		Element root = doc.getDocumentElement();
+
+		// 总算开始真正的解析了
+		doRegisterBeanDefinitions(root);
 	}
 
 	/**
@@ -129,6 +133,10 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 		this.delegate = createDelegate(getReaderContext(), root, parent);
 
 		if (this.delegate.isDefaultNamespace(root)) {
+			// 处理profile属性，即spring xml中的环境配置
+			/*
+			 * <beans profile="dev">...</beans>
+			 */
 			String profileSpec = root.getAttribute(PROFILE_ATTRIBUTE);
 			if (StringUtils.hasText(profileSpec)) {
 				String[] specifiedProfiles = StringUtils.tokenizeToStringArray(
@@ -145,8 +153,11 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 			}
 		}
 
+		// 预处理（留给子类实现的方法）
 		preProcessXml(root);
+		// 解析文档，注册bean
 		parseBeanDefinitions(root, this.delegate);
+		// 后处理（留给子类实现的方法）
 		postProcessXml(root);
 
 		this.delegate = parent;
@@ -173,31 +184,38 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 				if (node instanceof Element) {
 					Element ele = (Element) node;
 					if (delegate.isDefaultNamespace(ele)) {
+						// 默认命名空间处理：标准bean处理: <bean class=""/>
 						parseDefaultElement(ele, delegate);
 					}
 					else {
+						// 自定义命名空间处理： <tx:annotation-driven/>
 						delegate.parseCustomElement(ele);
 					}
 				}
 			}
 		}
 		else {
+			// 自定义命名空间处理,例如 <tx:annotation-driven/>
 			delegate.parseCustomElement(root);
 		}
 	}
 
 	private void parseDefaultElement(Element ele, BeanDefinitionParserDelegate delegate) {
+		// import
 		if (delegate.nodeNameEquals(ele, IMPORT_ELEMENT)) {
 			importBeanDefinitionResource(ele);
 		}
+		// alias
 		else if (delegate.nodeNameEquals(ele, ALIAS_ELEMENT)) {
 			processAliasRegistration(ele);
 		}
+		// bean
 		else if (delegate.nodeNameEquals(ele, BEAN_ELEMENT)) {
 			processBeanDefinition(ele, delegate);
 		}
+		// beans
 		else if (delegate.nodeNameEquals(ele, NESTED_BEANS_ELEMENT)) {
-			// recurse
+			// recurse  存在beans嵌套时，递归处理
 			doRegisterBeanDefinitions(ele);
 		}
 	}
@@ -299,6 +317,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	}
 
 	/**
+	 * 处理bean元素，生成BeanDefinition，并注册到registry
 	 * Process the given bean element, parsing the bean definition
 	 * and registering it with the registry.
 	 */
