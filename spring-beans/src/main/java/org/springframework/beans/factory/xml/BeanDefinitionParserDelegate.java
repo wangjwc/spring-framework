@@ -408,19 +408,26 @@ public class BeanDefinitionParserDelegate {
 	/**
 	 * Parses the supplied {@code <bean>} element. May return {@code null}
 	 * if there were errors during parse. Errors are reported to the
+	 *
+	 * @param containingBean 当作为bean、map、list等类型的内部bean时，参数值为parent bean，否则为空
+	 *
 	 * {@link org.springframework.beans.factory.parsing.ProblemReporter}.
 	 */
 	@Nullable
 	public BeanDefinitionHolder parseBeanDefinitionElement(Element ele, @Nullable BeanDefinition containingBean) {
+		// 获取id属性
 		String id = ele.getAttribute(ID_ATTRIBUTE);
+		// 获取name属性
 		String nameAttr = ele.getAttribute(NAME_ATTRIBUTE);
 
+		// 分割name属性，生成alias列表
 		List<String> aliases = new ArrayList<>();
 		if (StringUtils.hasLength(nameAttr)) {
 			String[] nameArr = StringUtils.tokenizeToStringArray(nameAttr, MULTI_VALUE_ATTRIBUTE_DELIMITERS);
 			aliases.addAll(Arrays.asList(nameArr));
 		}
 
+		// id为空时，从别名中获取beanName
 		String beanName = id;
 		if (!StringUtils.hasText(beanName) && !aliases.isEmpty()) {
 			beanName = aliases.remove(0);
@@ -431,12 +438,15 @@ public class BeanDefinitionParserDelegate {
 		}
 
 		if (containingBean == null) {
+			// beanName重复性校验
 			checkNameUniqueness(beanName, aliases, ele);
 		}
 
+		// 获取bean标签的其他属性，如class等
 		AbstractBeanDefinition beanDefinition = parseBeanDefinitionElement(ele, beanName, containingBean);
 		if (beanDefinition != null) {
 			if (!StringUtils.hasText(beanName)) {
+				// 如果不存在beanName，则生成默认值
 				try {
 					if (containingBean != null) {
 						beanName = BeanDefinitionReaderUtils.generateBeanName(
@@ -502,10 +512,13 @@ public class BeanDefinitionParserDelegate {
 
 		this.parseState.push(new BeanEntry(beanName));
 
+		// 获取class属性
 		String className = null;
 		if (ele.hasAttribute(CLASS_ATTRIBUTE)) {
 			className = ele.getAttribute(CLASS_ATTRIBUTE).trim();
 		}
+
+		// 获取parent属性
 		String parent = null;
 		if (ele.hasAttribute(PARENT_ATTRIBUTE)) {
 			parent = ele.getAttribute(PARENT_ATTRIBUTE);
