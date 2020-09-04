@@ -525,11 +525,22 @@ public class BeanDefinitionParserDelegate {
 		}
 
 		try {
+			// 创建GenericBeanDefinition（AbstractBeanDefinition还有Root和Child两个继承类，分别用于表示父bean和子bean，
+			// 一般来说直接使用generic即可））
 			AbstractBeanDefinition bd = createBeanDefinition(className, parent);
 
+			// 将其他属性甜宠到bd（即BeanDefinition）
 			parseBeanDefinitionAttributes(ele, beanName, containingBean, bd);
 			bd.setDescription(DomUtils.getChildElementValueByTagName(ele, DESCRIPTION_ELEMENT));
 
+			/*
+			 * 解析metadata
+			 * <bean id="xx" class="xx">
+			 *	<meta key="key1 value="value1/>
+			 * </bean>
+			 *
+			 * meta只在BeanDefinition中使用，使用方法为bd.getAttribute(key)
+			 */
 			parseMetaElements(ele, bd);
 			parseLookupOverrideSubElements(ele, bd.getMethodOverrides());
 			parseReplacedMethodSubElements(ele, bd.getMethodOverrides());
@@ -658,6 +669,7 @@ public class BeanDefinitionParserDelegate {
 
 	/**
 	 * Parse the meta elements underneath the given element, if any.
+	 * @param attributeAccessor (实际传入为AbstractBeanDefinition，AbstractBeanDefinition extend BeanMetadataAttributeAccessor）
 	 */
 	public void parseMetaElements(Element ele, BeanMetadataAttributeAccessor attributeAccessor) {
 		NodeList nl = ele.getChildNodes();
@@ -669,6 +681,8 @@ public class BeanDefinitionParserDelegate {
 				String value = metaElement.getAttribute(VALUE_ATTRIBUTE);
 				BeanMetadataAttribute attribute = new BeanMetadataAttribute(key, value);
 				attribute.setSource(extractSource(metaElement));
+
+				// 添加到bd
 				attributeAccessor.addMetadataAttribute(attribute);
 			}
 		}
