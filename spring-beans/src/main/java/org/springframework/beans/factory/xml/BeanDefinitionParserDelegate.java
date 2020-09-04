@@ -542,14 +542,36 @@ public class BeanDefinitionParserDelegate {
 			 * meta只在BeanDefinition中使用，使用方法为bd.getAttribute(key)
 			 */
 			parseMetaElements(ele, bd);
+
+			/*
+			 * 解析<lookup-method>子元素（ps：lookup-method子标签用于提供可插拔的配置，用的场景较少）
+			 */
 			parseLookupOverrideSubElements(ele, bd.getMethodOverrides());
+
+			/*
+			 * 解析<replaced-method>	子元素（ps：replaced-method子标签用于动态的替换bean中某个方法）
+			 */
 			parseReplacedMethodSubElements(ele, bd.getMethodOverrides());
 
+			/*
+			 * 解析<constructor-arg>子元素
+			 */
 			parseConstructorArgElements(ele, bd);
+
+			/*
+			 * 解析<property>子元素
+			 */
 			parsePropertyElements(ele, bd);
+
+			/*
+			 * 解析<qualifier>子元素
+			 */
 			parseQualifierElements(ele, bd);
 
+			// BeanDefinition来源（比如xml配置文件）
 			bd.setResource(this.readerContext.getResource());
+
+			// ?
 			bd.setSource(extractSource(ele));
 
 			return bd;
