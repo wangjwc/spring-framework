@@ -406,6 +406,7 @@ public class BeanDefinitionParserDelegate {
 	}
 
 	/**
+	 * 解析<bean></bean>元素
 	 * Parses the supplied {@code <bean>} element. May return {@code null}
 	 * if there were errors during parse. Errors are reported to the
 	 *
@@ -442,9 +443,9 @@ public class BeanDefinitionParserDelegate {
 			checkNameUniqueness(beanName, aliases, ele);
 		}
 
-		// 获取bean标签的其他属性，如class等
+		// 获取bean标签的其他属性和子元素，如class、<lookup-method>等
 		AbstractBeanDefinition beanDefinition = parseBeanDefinitionElement(ele, beanName, containingBean);
-		if (beanDefinition != null) {
+		if (beanDefinition != null) { // 据观察，实际上不会返回null
 			if (!StringUtils.hasText(beanName)) {
 				// 如果不存在beanName，则生成默认值
 				try {
@@ -503,6 +504,7 @@ public class BeanDefinitionParserDelegate {
 	}
 
 	/**
+	 * 解析<bean></bean>元素除了name和aliases外的的属性和子元素，返回BeanDefinition
 	 * Parse the bean definition itself, without regard to name or aliases. May return
 	 * {@code null} if problems occurred during the parsing of the bean definition.
 	 */
@@ -529,10 +531,15 @@ public class BeanDefinitionParserDelegate {
 			// 一般来说直接使用generic即可））
 			AbstractBeanDefinition bd = createBeanDefinition(className, parent);
 
-			// 将其他属性甜宠到bd（即BeanDefinition）
+			/*
+			 * 解析bean标签上除了name和aliases外的属性，并填充到BeanDefinition
+			 */
 			parseBeanDefinitionAttributes(ele, beanName, containingBean, bd);
 			bd.setDescription(DomUtils.getChildElementValueByTagName(ele, DESCRIPTION_ELEMENT));
 
+			/*
+			 * 开始解析子元素
+			 */
 			/*
 			 * 解析metadata
 			 * <bean id="xx" class="xx">
@@ -564,14 +571,14 @@ public class BeanDefinitionParserDelegate {
 			parsePropertyElements(ele, bd);
 
 			/*
-			 * 解析<qualifier>子元素
+			 * 解析<￿qualifier>子元素
 			 */
 			parseQualifierElements(ele, bd);
 
 			// BeanDefinition来源（比如xml配置文件）
 			bd.setResource(this.readerContext.getResource());
 
-			// ?
+			// todo 待确定
 			bd.setSource(extractSource(ele));
 
 			return bd;
@@ -1411,6 +1418,7 @@ public class BeanDefinitionParserDelegate {
 	}
 
 	/**
+	 * 自定义元素解析
 	 * Parse a custom element (outside of the default namespace).
 	 * @param ele the element to parse
 	 * @return the resulting bean definition
@@ -1421,9 +1429,10 @@ public class BeanDefinitionParserDelegate {
 	}
 
 	/**
+	 * 自定义元素解析
 	 * Parse a custom element (outside of the default namespace).
 	 * @param ele the element to parse
-	 * @param containingBd the containing bean definition (if any)
+	 * @param containingBd the containing bean definition (if any) 代表parentBean
 	 * @return the resulting bean definition
 	 */
 	@Nullable
@@ -1451,10 +1460,11 @@ public class BeanDefinitionParserDelegate {
 	}
 
 	/**
+	 * 处理自定义标签和属性
 	 * Decorate the given bean definition through a namespace handler, if applicable.
 	 * @param ele the current element
 	 * @param originalDef the current bean definition
-	 * @param containingBd the containing bean definition (if any)
+	 * @param containingBd the containing bean definition (if any)这里传的时parent bean，没有时传null
 	 * @return the decorated bean definition
 	 */
 	public BeanDefinitionHolder decorateBeanDefinitionIfRequired(
@@ -1465,10 +1475,12 @@ public class BeanDefinitionParserDelegate {
 		// Decorate based on custom attributes first.
 		NamedNodeMap attributes = ele.getAttributes();
 		for (int i = 0; i < attributes.getLength(); i++) {
+			// 遍历所有属性，看是否有自定义属性（有的话，执行装饰）
 			Node node = attributes.item(i);
 			finalDefinition = decorateIfRequired(node, finalDefinition, containingBd);
 		}
 
+		// 遍历子元素，看是否有自定义元素（有的话执行装饰）
 		// Decorate based on custom nested elements.
 		NodeList children = ele.getChildNodes();
 		for (int i = 0; i < children.getLength(); i++) {
@@ -1491,10 +1503,13 @@ public class BeanDefinitionParserDelegate {
 	public BeanDefinitionHolder decorateIfRequired(
 			Node node, BeanDefinitionHolder originalDef, @Nullable BeanDefinition containingBd) {
 
+		// 获取自定义标签的命名空间
 		String namespaceUri = getNamespaceURI(node);
 		if (namespaceUri != null && !isDefaultNamespace(namespaceUri)) {
+			// 根据命名空间找到对应的自定义处理器
 			NamespaceHandler handler = this.readerContext.getNamespaceHandlerResolver().resolve(namespaceUri);
 			if (handler != null) {
+				// 装饰
 				BeanDefinitionHolder decorated =
 						handler.decorate(node, originalDef, new ParserContext(this.readerContext, this, containingBd));
 				if (decorated != null) {

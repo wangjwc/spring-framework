@@ -162,14 +162,18 @@ public abstract class BeanDefinitionReaderUtils {
 			BeanDefinitionHolder definitionHolder, BeanDefinitionRegistry registry)
 			throws BeanDefinitionStoreException {
 
+		// 注册bean，beanName必须唯一
 		// Register bean definition under primary name.
 		String beanName = definitionHolder.getBeanName();
+		// DefaultListableBeanFactory.registerBeanDefinition
 		registry.registerBeanDefinition(beanName, definitionHolder.getBeanDefinition());
 
+		// 注册别名
 		// Register aliases for bean name, if any.
 		String[] aliases = definitionHolder.getAliases();
 		if (aliases != null) {
 			for (String alias : aliases) {
+				// SimpleAliasRegistry
 				registry.registerAlias(beanName, alias);
 			}
 		}

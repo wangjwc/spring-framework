@@ -928,6 +928,8 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 		if (beanDefinition instanceof AbstractBeanDefinition) {
 			try {
+				// 配置校验和为方便后续处理打标
+				// 目前主要针对methodOverrides校验
 				((AbstractBeanDefinition) beanDefinition).validate();
 			}
 			catch (BeanDefinitionValidationException ex) {
@@ -936,12 +938,18 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			}
 		}
 
+		// beanName重复校验
 		BeanDefinition existingDefinition = this.beanDefinitionMap.get(beanName);
 		if (existingDefinition != null) {
+			// 如果设置类allowBeanDefinitionOverriding = true，则同名的bean会替换已经存在的bean
+			// 平时很少用到
 			if (!isAllowBeanDefinitionOverriding()) {
 				throw new BeanDefinitionOverrideException(beanName, beanDefinition, existingDefinition);
 			}
 			else if (existingDefinition.getRole() < beanDefinition.getRole()) {
+				// AbstractBeanDefinition中，默认role=ROLE_APPLICATION
+				// 所以用户自定义的bean和spring内部bean冲突时，会被内部bean覆盖
+				// ROLE_APPLICATION < ROLE_SUPPORT < ROLE_INFRASTRUCTURE
 				// e.g. was ROLE_APPLICATION, now overriding with ROLE_SUPPORT or ROLE_INFRASTRUCTURE
 				if (logger.isInfoEnabled()) {
 					logger.info("Overriding user-defined bean definition for bean '" + beanName +
@@ -963,10 +971,14 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 							"] with [" + beanDefinition + "]");
 				}
 			}
+			// 覆盖原本的bean
 			this.beanDefinitionMap.put(beanName, beanDefinition);
 		}
 		else {
 			if (hasBeanCreationStarted()) {
+				// factory已经生成过一个bean（比如AbstractBeanFactory.doGetBean方法被调用过）
+
+				// todo 这么做的意义，and removeManualSingletonName是什么作用
 				// Cannot modify startup-time collection elements anymore (for stable iteration)
 				synchronized (this.beanDefinitionMap) {
 					this.beanDefinitionMap.put(beanName, beanDefinition);
@@ -978,6 +990,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 				}
 			}
 			else {
+				// 注册阶段，直接添加到map
 				// Still in startup registration phase
 				this.beanDefinitionMap.put(beanName, beanDefinition);
 				this.beanDefinitionNames.add(beanName);
@@ -987,6 +1000,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		}
 
 		if (existingDefinition != null || containsSingleton(beanName)) {
+			// 清除老的beanName的缓存，TODO 因为很少用到重复beanName的情况，这个延后分析
 			resetBeanDefinition(beanName);
 		}
 		else if (isConfigurationFrozen()) {
