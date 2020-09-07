@@ -11,6 +11,6 @@ public class MyCustomNamespaceHandler extends NamespaceHandlerSupport {
 	@Override
 	public void init() {
 		// 将自定义解析起注册到spring容器
-		registerBeanDefinitionParser("user", new MyCustomBeanDefinitionParser());
+		registerBeanDefinitionParser("custom", new MyCustomBeanDefinitionParser());
 	}
 }

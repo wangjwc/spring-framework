@@ -284,7 +284,7 @@ configure(allprojects) { project ->
 	}
 	configurations.all {
 		resolutionStrategy {
-			cacheChangingModulesFor 24, "hours"
+			cacheChangingModulesFor 0, "hours"
 			cacheDynamicVersionsFor 0, "seconds"
 		}
 	}
