@@ -1,0 +1,12 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xmlns:myCustom="http://www.my.com/schema/custom"
+	   xsi:schemaLocation="
+		http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.my.com/schema/custom http://www.my.com/schema/custom.xsd
+		">
+
+	<bean id="sampleBean" class="org.springframework.beans.learn.beans.SampleBean"/>
+
+	<myCustom:custom id="myCustom" userName="my custom user name" email="my custom email"/>
+</beans>

@@ -1,25 +1,20 @@
-package org.springframework.my.xml;
+package org.springframework.my.learn;
 
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.beans.factory.xml.XmlBeanDefinitionReader;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.my.learn.beans.SampleBean;
 
-import java.io.IOException;
-
 /**
  * @Author : wangjingwang
- * @Date : 2020/8/10 22:27
+ * @Date : 2020/8/11 18:29
  * @Description :
  */
-public class LearnXmlBeanFactory {
-	public static void main(String[] args) throws IOException {
-		ClassPathResource classPathResource = new ClassPathResource("/spring/hello.xml");
-		System.out.println(classPathResource.getFile().getAbsolutePath());
-		//String path = System.getProperty("user.dir");
-		//Resource resource = new FileSystemResource(path+"/spring-learn/src/main/java/org/springframework/my/learn/xml/hello.xml");
+public class HelloTests {
+	public static void main(String[] args) {
+		String path = System.getProperty("user.dir");
+		Resource resource = new FileSystemResource(path+"/src/test/java/org/springframework/beans/learn/xml/hello.xml");
 
 		//XmlBeanDefinitionReader // DefaultListableBeanFactory
 		/**
@@ -32,9 +27,9 @@ public class LearnXmlBeanFactory {
 		 *
 		 */
 		DefaultListableBeanFactory registry = new DefaultListableBeanFactory();
-		XmlBeanDefinitionReader reader = new XmlBeanDefinitionReader(registry);
-		reader.loadBeanDefinitions(classPathResource);
 
+		XmlBeanDefinitionReader reader = new XmlBeanDefinitionReader(registry);
+		reader.loadBeanDefinitions(resource);
 
 		SampleBean sampleBean = (SampleBean)registry.getBean("sampleBean");
 		System.out.println(sampleBean.getTestStr());
@@ -48,4 +43,5 @@ public class LearnXmlBeanFactory {
 //			System.out.println("myCustom.email=>" + sampleCustom.getEmail());
 //		}
 	}
+
 }
