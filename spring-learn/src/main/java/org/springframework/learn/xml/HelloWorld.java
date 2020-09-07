@@ -1,51 +1,48 @@
-package org.springframework.my.xml;
+package org.springframework.learn.xml;
 
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.beans.factory.xml.XmlBeanDefinitionReader;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.Resource;
-import org.springframework.my.learn.beans.SampleBean;
+import org.springframework.learn.beans.SampleBean;
 
 import java.io.IOException;
 
 /**
+ * DefaultListableBeanFactory是bean注册的基础
+ * XmlBeanDefinitionReader是xml读取的基础
+ * 其他的启动方式都是对二者的封装
  * @Author : wangjingwang
  * @Date : 2020/8/10 22:27
  * @Description :
  */
-public class LearnXmlBeanFactory {
+public class HelloWorld {
 	public static void main(String[] args) throws IOException {
 		ClassPathResource classPathResource = new ClassPathResource("/spring/hello.xml");
 		System.out.println(classPathResource.getFile().getAbsolutePath());
 		//String path = System.getProperty("user.dir");
 		//Resource resource = new FileSystemResource(path+"/spring-learn/src/main/java/org/springframework/my/learn/xml/hello.xml");
-
-		//XmlBeanDefinitionReader // DefaultListableBeanFactory
-		/**
+		/*
 		 * 初始化factory、registry
 		 * ignoreDependencyInterface(BeanNameAware.class);
 		 * ignoreDependencyInterface(BeanFactoryAware.class);
 		 * ignoreDependencyInterface(BeanClassLoaderAware.class);
 		 *
 		 * DefaultListableBeanFactory是spring注册及加载bean的默认实现
-		 *
 		 */
 		DefaultListableBeanFactory registry = new DefaultListableBeanFactory();
-		XmlBeanDefinitionReader reader = new XmlBeanDefinitionReader(registry);
-		reader.loadBeanDefinitions(classPathResource);
 
+		/*
+		 * 初始化resourceLoader和environment
+		 */
+		XmlBeanDefinitionReader reader = new XmlBeanDefinitionReader(registry);
+
+		/*
+		 * 读取xml，注册BeanDefinition
+		 */
+		reader.loadBeanDefinitions(classPathResource);
 
 		SampleBean sampleBean = (SampleBean)registry.getBean("sampleBean");
 		System.out.println(sampleBean.getTestStr());
 		System.out.println("LearnXmlBeanFactory ");
-
-//		SampleCustom sampleCustom = (SampleCustom)registry.getBean("myCustom");
-//		if (null != sampleCustom) {
-//			System.out.println("myCustom not found");
-//		} else {
-//			System.out.println("myCustom.userName=>" + sampleCustom.getUserName());
-//			System.out.println("myCustom.email=>" + sampleCustom.getEmail());
-//		}
 	}
 }

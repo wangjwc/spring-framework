@@ -1,12 +1,8 @@
-package org.springframework.my.xml;
+package org.springframework.learn.xml.custom;
 
-import org.springframework.beans.factory.support.DefaultListableBeanFactory;
-import org.springframework.beans.factory.xml.XmlBeanDefinitionReader;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.my.learn.beans.SampleBean;
-import org.springframework.my.learn.beans.SampleCustom;
+import org.springframework.learn.beans.SampleCustom;
 
 import java.io.IOException;
 

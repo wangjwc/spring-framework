@@ -1,8 +1,8 @@
-package org.springframework.my.learn;
+package org.springframework.learn.xml.custom;
 
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.xml.AbstractSingleBeanDefinitionParser;
-import org.springframework.my.learn.beans.SampleCustom;
+import org.springframework.learn.beans.SampleCustom;
 import org.w3c.dom.Element;
 
 /**

@@ -1,4 +1,4 @@
-package org.springframework.my.learn;
+package org.springframework.learn.xml.custom;
 
 import org.springframework.beans.factory.xml.NamespaceHandlerSupport;
 

@@ -1,4 +1,4 @@
-package org.springframework.my.learn.beans;
+package org.springframework.learn.beans;
 
 /**
  * @Author : wangjingwang

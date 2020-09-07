@@ -6,7 +6,7 @@
 		http://www.my.com/schema/custom http://www.my.com/schema/custom.xsd
 		">
 
-	<bean id="sampleBean" class="org.springframework.my.learn.beans.SampleBean"/>
+	<bean id="sampleBean" class="org.springframework.learn.beans.SampleBean"/>
 
-	<myCustom:custom id="myCustom" userName="my custom user name" email="my custom email"/>
+	<myCustom:custom id="myCustom" userName="this is my custom user name" email="this is my custom email"/>
 </beans>
