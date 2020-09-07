@@ -3,6 +3,7 @@ package org.springframework.my.xml;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.beans.factory.xml.XmlBeanDefinitionReader;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.my.SampleBean;
 
 /**
@@ -12,13 +13,35 @@ import org.springframework.my.SampleBean;
  */
 public class LearnXmlBeanFactory {
 	public static void main(String[] args) {
-		//XmlBeanDefinitionReader // DefaultListableBeanFactory
-		DefaultListableBeanFactory registry = new DefaultListableBeanFactory();
-		XmlBeanDefinitionReader reader = new XmlBeanDefinitionReader(registry);
+		String path = System.getProperty("user.dir");
+		Resource resource = new FileSystemResource(path+"/spring-beans/src/test/java/org/springframework/beans/learn/xml/hello.xml");
 
-		reader.loadBeanDefinitions(new FileSystemResource("D:\\Workspaces\\IdeaProjects\\Spring\\spring-framework\\spring-learn\\src\\main\\resources\\test.xml"));
+		//XmlBeanDefinitionReader // DefaultListableBeanFactory
+		/**
+		 * 初始化factory、registry
+		 * ignoreDependencyInterface(BeanNameAware.class);
+		 * ignoreDependencyInterface(BeanFactoryAware.class);
+		 * ignoreDependencyInterface(BeanClassLoaderAware.class);
+		 *
+		 * DefaultListableBeanFactory是spring注册及加载bean的默认实现
+		 *
+		 */
+		DefaultListableBeanFactory registry = new DefaultListableBeanFactory();
+
+		XmlBeanDefinitionReader reader = new XmlBeanDefinitionReader(registry);
+		reader.loadBeanDefinitions(resource);
+
+
 		SampleBean sampleBean = (SampleBean)registry.getBean("sampleBean");
 		System.out.println(sampleBean.getTestStr());
 		System.out.println("LearnXmlBeanFactory ");
+
+//		SampleCustom sampleCustom = (SampleCustom)registry.getBean("myCustom");
+//		if (null != sampleCustom) {
+//			System.out.println("myCustom not found");
+//		} else {
+//			System.out.println("myCustom.userName=>" + sampleCustom.getUserName());
+//			System.out.println("myCustom.email=>" + sampleCustom.getEmail());
+//		}
 	}
 }

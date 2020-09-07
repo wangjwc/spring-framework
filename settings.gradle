@@ -31,7 +31,7 @@ include "spring-webflux"
 include "spring-websocket"
 include "framework-bom"
 include "integration-tests"
-include 'spring-learn'
+include "spring-learn"
 rootProject.name = "spring"
 rootProject.children.each {project ->
 	println(">>>>>>>>>>>>>>>>children:" + project.name)
