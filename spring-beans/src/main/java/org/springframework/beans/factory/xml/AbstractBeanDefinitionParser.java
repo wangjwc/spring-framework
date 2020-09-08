@@ -60,24 +60,32 @@ public abstract class AbstractBeanDefinitionParser implements BeanDefinitionPars
 	@Override
 	@Nullable
 	public final BeanDefinition parse(Element element, ParserContext parserContext) {
+		// 解析获取AbstractBeanDefinition（abstract方法）
 		AbstractBeanDefinition definition = parseInternal(element, parserContext);
 		if (definition != null && !parserContext.isNested()) {
 			try {
+				// 解析id，即bean name唯一标识（生成或者从标签读取）
 				String id = resolveId(element, definition, parserContext);
 				if (!StringUtils.hasText(id)) {
 					parserContext.getReaderContext().error(
 							"Id is required for element '" + parserContext.getDelegate().getLocalName(element)
 									+ "' when used as a top-level tag", element);
 				}
+				// 解析aliases
 				String[] aliases = null;
 				if (shouldParseNameAsAliases()) {
+					// 将name属性解析为aliases
 					String name = element.getAttribute(NAME_ATTRIBUTE);
 					if (StringUtils.hasLength(name)) {
 						aliases = StringUtils.trimArrayElements(StringUtils.commaDelimitedListToStringArray(name));
 					}
 				}
+
+				// 创建BeanDefinitionHolder并注册
 				BeanDefinitionHolder holder = new BeanDefinitionHolder(definition, id, aliases);
 				registerBeanDefinition(holder, parserContext.getRegistry());
+
+				// 触发事件、postProcessComponentDefinition(自定义实现）
 				if (shouldFireEvents()) {
 					BeanComponentDefinition componentDefinition = new BeanComponentDefinition(holder);
 					postProcessComponentDefinition(componentDefinition);
@@ -110,9 +118,11 @@ public abstract class AbstractBeanDefinitionParser implements BeanDefinitionPars
 			throws BeanDefinitionStoreException {
 
 		if (shouldGenerateId()) {
+			// 生成id
 			return parserContext.getReaderContext().generateBeanName(definition);
 		}
 		else {
+			// 优先从标签获取，获取不到时生成
 			String id = element.getAttribute(ID_ATTRIBUTE);
 			if (!StringUtils.hasText(id) && shouldGenerateIdAsFallback()) {
 				id = parserContext.getReaderContext().generateBeanName(definition);

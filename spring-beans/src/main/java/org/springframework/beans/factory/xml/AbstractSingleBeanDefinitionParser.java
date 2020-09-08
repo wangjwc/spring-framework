@@ -65,31 +65,47 @@ public abstract class AbstractSingleBeanDefinitionParser extends AbstractBeanDef
 		if (parentName != null) {
 			builder.getRawBeanDefinition().setParentName(parentName);
 		}
+
+		/*
+		 * 调用自定义解析器的getBeanClass和getBeanClassName获取bean的class定义
+		 * 优先使用getBeanClass，getBeanClass未重写或返回null时再调用getBeanClassName
+		 */
+		// 获取bean的class，实际调用自定义parser（如果自定义parser未实现则返回null）
 		Class<?> beanClass = getBeanClass(element);
 		if (beanClass != null) {
 			builder.getRawBeanDefinition().setBeanClass(beanClass);
 		}
 		else {
+			// 获取bean的class name，实际调用自定义parser（如果自定义parser未实现则返回null）
 			String beanClassName = getBeanClassName(element);
 			if (beanClassName != null) {
 				builder.getRawBeanDefinition().setBeanClassName(beanClassName);
 			}
 		}
 		builder.getRawBeanDefinition().setSource(parserContext.extractSource(element));
+
+		// 若当前bean是child bean，则使用parent bean的scope
 		BeanDefinition containingBd = parserContext.getContainingBeanDefinition();
 		if (containingBd != null) {
 			// Inner bean definition must receive same scope as containing bean.
 			builder.setScope(containingBd.getScope());
 		}
+
+		// 是否延迟加载
 		if (parserContext.isDefaultLazyInit()) {
 			// Default-lazy-init applies to custom bean definitions as well.
 			builder.setLazyInit(true);
 		}
+
+		// 调用子类重写的doParse方法
 		doParse(element, parserContext, builder);
+
+		// 校验，并返回BeanDefinition
 		return builder.getBeanDefinition();
 	}
 
 	/**
+	 * 在当前bean定义为子bean的情况下，返回已解析的父bean的名称（id），默认返回null，表示当前是root bean
 	 * Determine the name for the parent of the currently parsed bean,
 	 * in case of the current bean being defined as a child bean.
 	 * <p>The default implementation returns {@code null},
