@@ -70,17 +70,27 @@ public abstract class NamespaceHandlerSupport implements NamespaceHandler {
 	@Override
 	@Nullable
 	public BeanDefinition parse(Element element, ParserContext parserContext) {
+		// 寻找解析器
 		BeanDefinitionParser parser = findParserForElement(element, parserContext);
+
+		// 执行解析
+		// learn demo中使用的是AbstractSingleBeanDefinitionParser
+		//org.springframework.beans.factory.xml.AbstractBeanDefinitionParser.parse
 		return (parser != null ? parser.parse(element, parserContext) : null);
 	}
 
 	/**
 	 * Locates the {@link BeanDefinitionParser} from the register implementations using
 	 * the local name of the supplied {@link Element}.
+	 * @see NamespaceHandlerSupport#registerBeanDefinitionParser(java.lang.String, org.springframework.beans.factory.xml.BeanDefinitionParser)
 	 */
 	@Nullable
 	private BeanDefinitionParser findParserForElement(Element element, ParserContext parserContext) {
+		// 获取元素名，比如<myCustom:custom>中的custom
 		String localName = parserContext.getDelegate().getLocalName(element);
+
+		// 从map中取出解析器
+		// NamespaceHandlerSupport#registerBeanDefinitionParser
 		BeanDefinitionParser parser = this.parsers.get(localName);
 		if (parser == null) {
 			parserContext.getReaderContext().fatal(
