@@ -118,6 +118,7 @@ public interface FactoryBean<T> {
 	Class<?> getObjectType();
 
 	/**
+	 * 由FactoryBean创建的bean是否是单例的，如果是单例，那么生成的bean会放入缓存池
 	 * Is the object managed by this factory a singleton? That is,
 	 * will {@link #getObject()} always return the same object
 	 * (a reference that can be cached)?

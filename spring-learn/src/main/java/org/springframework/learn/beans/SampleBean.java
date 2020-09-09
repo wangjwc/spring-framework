@@ -6,7 +6,7 @@ package org.springframework.learn.beans;
  * @Description :
  */
 public class SampleBean {
-	private String testStr = "test str";
+	private String testStr = "default str";
 
 	public String getTestStr() {
 		return testStr;

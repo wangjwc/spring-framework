@@ -243,9 +243,19 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			String name, @Nullable Class<T> requiredType, @Nullable Object[] args, boolean typeCheckOnly)
 			throws BeansException {
 
+		/*
+		 * 将参数name转换为beanName（别名alias、工厂名）
+		 */
 		String beanName = transformedBeanName(name);
 		Object bean;
 
+		/*
+		 * 检查缓存或实例工厂中是否有对应的实例
+		 *
+		 * 为了解决循环依赖，spring创建bean之前会先创建bean的ObjectFactory，并加入缓存中
+		 */
+
+		// 尝试从缓存或者singletonFactories中的ObjectFactory中获取
 		// Eagerly check singleton cache for manually registered singletons.
 		Object sharedInstance = getSingleton(beanName);
 		if (sharedInstance != null && args == null) {
@@ -1191,6 +1201,9 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	//---------------------------------------------------------------------
 
 	/**
+	 * 1、将factory前缀去掉
+	 * 2、将alias转换为规范beanName
+	 *
 	 * Return the bean name, stripping out the factory dereference prefix if necessary,
 	 * and resolving aliases to canonical names.
 	 * @param name the user-specified name

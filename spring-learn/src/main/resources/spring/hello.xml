@@ -4,6 +4,10 @@
 		http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
 		">
 
-	<bean id="sampleBean" class="org.springframework.learn.beans.SampleBean"/>
+	<bean id="sampleBean" class="org.springframework.learn.beans.SampleBean">
+		<property name="testStr" value="from xml property element"/>
+	</bean>
+
+	<bean id="sampleBeanByFactory" class="org.springframework.learn.xml.factory.SampleBeanFactoryBean"/>
 
 </beans>

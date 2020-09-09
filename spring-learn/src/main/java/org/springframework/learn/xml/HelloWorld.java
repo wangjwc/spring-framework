@@ -41,8 +41,24 @@ public class HelloWorld {
 		 */
 		reader.loadBeanDefinitions(classPathResource);
 
+		/*
+		 * 获取bean
+		 */
 		SampleBean sampleBean = (SampleBean)registry.getBean("sampleBean");
 		System.out.println(sampleBean.getTestStr());
+
+		/*
+		 * 从FactoryBean创建的bean
+		 */
+		SampleBean sampleBeanByFactory = (SampleBean)registry.getBean("sampleBeanByFactory");
+		System.out.println(sampleBeanByFactory.getTestStr());
+
+		/*
+		 * 获取FactoryBean的原始实例, name前添加&
+		 */
+		Object obj = registry.getBean("&sampleBeanByFactory");
+		System.out.println(obj.getClass());
+
 		System.out.println("LearnXmlBeanFactory ");
 	}
 }
