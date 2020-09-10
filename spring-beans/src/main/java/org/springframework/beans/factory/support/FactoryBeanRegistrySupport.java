@@ -95,10 +95,19 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 	 */
 	protected Object getObjectFromFactoryBean(FactoryBean<?> factory, String beanName, boolean shouldPostProcess) {
 		if (factory.isSingleton() && containsSingleton(beanName)) {
+			/*
+			 * 1、如果是单例的，则先尝试从缓存获取
+			 * 2、doGetObjectFromFactoryBean
+			 */
 			synchronized (getSingletonMutex()) {
 				Object object = this.factoryBeanObjectCache.get(beanName);
 				if (object == null) {
 					object = doGetObjectFromFactoryBean(factory, beanName);
+
+					// 再次查看缓存，如果缓存已经有了，便放弃刚才创建的bean，使用缓存中的
+					// TODO 这是一个bug fix，有时间研究下出现问题的具体原因(明明已经加锁了啊)，
+					//  查看提交记录 d870b38，可以看到测试用例
+					//
 					// Only post-process and store if not put there already during getObject() call above
 					// (e.g. because of circular reference processing triggered by custom getBean calls)
 					Object alreadyThere = this.factoryBeanObjectCache.get(beanName);
@@ -156,6 +165,9 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 	private Object doGetObjectFromFactoryBean(FactoryBean<?> factory, String beanName) throws BeanCreationException {
 		Object object;
 		try {
+			/*
+			 * 需要权限验证
+			 */
 			if (System.getSecurityManager() != null) {
 				AccessControlContext acc = getAccessControlContext();
 				try {
@@ -166,6 +178,7 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 				}
 			}
 			else {
+				// 调用FactoryBean.getObject()
 				object = factory.getObject();
 			}
 		}

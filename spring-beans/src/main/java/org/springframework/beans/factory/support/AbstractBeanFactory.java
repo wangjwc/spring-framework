@@ -1790,6 +1790,11 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	}
 
 	/**
+	 * 1、如果那么含有&前缀，则校验入参beanInstance是否是FactoryBean，如果是返回，否则抛异常
+	 *
+	 * 2、传入的bean实例可能是普通bean，也可能是FactoryBean，
+	 * 		如果是普通bean，则直接返回
+	 * 		如果是FactoryBean，则我们调用getObject创建bean。
 	 * Get the object for the given bean instance, either the bean
 	 * instance itself or its created object in case of a FactoryBean.
 	 * @param beanInstance the shared bean instance
@@ -1801,7 +1806,11 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	protected Object getObjectForBeanInstance(
 			Object beanInstance, String name, String beanName, @Nullable RootBeanDefinition mbd) {
 
-		// Don't let calling code try to dereference the factory if the bean isn't a factory.
+		/*
+		 * 如果name包含&前缀（即表示要获取的时FactoryBean实例），但beanInstance不是FactoryBean时，异常
+		 */
+		// Don't let calling code try to dereference（即&前缀，这里借用c语言中的指针操作来表达）
+		// the factory if the bean isn't a factory.
 		if (BeanFactoryUtils.isFactoryDereference(name)) {
 			if (beanInstance instanceof NullBean) {
 				return beanInstance;
@@ -1815,28 +1824,49 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			return beanInstance;
 		}
 
+		/*
+		 * 传入的bean实例可能是普通bean，也可能是FactoryBean，
+		 * 如果是普通bean，则直接返回
+		 * 如果是FactoryBean，则我们调用getObject创建bean。
+		 */
 		// Now we have the bean instance, which may be a normal bean or a FactoryBean.
 		// If it's a FactoryBean, we use it to create a bean instance, unless the
 		// caller actually wants a reference to the factory.
+
+		// 如果不是FactoryBean，直接返回
 		if (!(beanInstance instanceof FactoryBean)) {
 			return beanInstance;
 		}
 
+		/*
+		 * 使用FactoryBean生成bean
+		 */
 		Object object = null;
 		if (mbd != null) {
 			mbd.isFactoryBean = true;
 		}
 		else {
+			// 从factoryBeanObjectCache缓存中获取bean
 			object = getCachedObjectForFactoryBean(beanName);
 		}
 		if (object == null) {
+			// 使用FactoryBean创建bean
 			// Return bean instance from factory.
 			FactoryBean<?> factory = (FactoryBean<?>) beanInstance;
+
+			// 检查是否包含对应的BeanDefinition
+			//（DefaultListableBeanFactory实现中，即是检查beanDefinitionMap中是否存在beanName）
 			// Caches object obtained from FactoryBean if it is a singleton.
 			if (mbd == null && containsBeanDefinition(beanName)) {
+				// 将GenericBeanDefinition转话为RootDeanDefinition，如果是child bean，则同时
+				// 会合并parent bean的相关属性
 				mbd = getMergedLocalBeanDefinition(beanName);
 			}
+
+			// 是否是用户定义（'人造的'）的（区别与spring内置的）
 			boolean synthetic = (mbd != null && mbd.isSynthetic());
+
+			// 从FactoryBean中获取实例
 			object = getObjectFromFactoryBean(factory, beanName, !synthetic);
 		}
 		return object;
