@@ -165,6 +165,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	@Override
 	@Nullable
 	public Object getSingleton(String beanName) {
+		// allowEarlyReference=true: 允许早期依赖
 		return getSingleton(beanName, true);
 	}
 
@@ -173,19 +174,39 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 * <p>Checks already instantiated singletons and also allows for an early
 	 * reference to a currently created singleton (resolving a circular reference).
 	 * @param beanName the name of the bean to look for
-	 * @param allowEarlyReference whether early references should be created or not
+	 * @param allowEarlyReference whether early references should be created or not 所谓早期依赖，指的是bean已经构建，但还未装饰（aop等）
 	 * @return the registered singleton object, or {@code null} if none found
 	 */
 	@Nullable
 	protected Object getSingleton(String beanName, boolean allowEarlyReference) {
-		// 尝试从缓存中获取
+		/*
+		 * 一级缓存（单例缓存）：尝试从缓存中获取
+		 *
+		 * singletonObjects用于缓存已创建的bean实例
+		 */
 		Object singletonObject = this.singletonObjects.get(beanName);
+
+		/*
+		 * 二级缓存（早期单例缓存）：如果获取不到并且对象正在创建中，则再尝试从二级缓存获取
+		 *
+		 * earlySingletonObjects用于缓存创建中的bean，用于解决循环依赖
+		 * 比如，A依赖B，B依赖A
+		 * 如果A先创建，则先将A标记为创建中，然后先创建依赖B时，由于B获取不到A，便earlySingletonObjects中获取正在创建中的A
+		 */
 		if (singletonObject == null && isSingletonCurrentlyInCreation(beanName)) {
 			synchronized (this.singletonObjects) {
 				singletonObject = this.earlySingletonObjects.get(beanName);
+
+				/*
+				 * 如果二级缓存（earlySingletonObjects)中未获取到，当allowEarlyReference=true时从三级缓存获取ObjectFactory，
+				 * 然后调用singletonFactory.getObject()获取早期bean
+				 */
 				if (singletonObject == null && allowEarlyReference) {
 					ObjectFactory<?> singletonFactory = this.singletonFactories.get(beanName);
 					if (singletonFactory != null) {
+						/*
+						 * 创建早期bean，并且将缓存剪切到二级缓存
+						 */
 						singletonObject = singletonFactory.getObject();
 						this.earlySingletonObjects.put(beanName, singletonObject);
 						this.singletonFactories.remove(beanName);
