@@ -85,6 +85,7 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 	}
 
 	/**
+	 * 使用FactoryBean创建bean，执行postProcess并缓存（BeanPostProcessor）
 	 * Obtain an object to expose from the given FactoryBean.
 	 * @param factory the FactoryBean instance
 	 * @param beanName the name of the bean
@@ -112,16 +113,23 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 					// (e.g. because of circular reference processing triggered by custom getBean calls)
 					Object alreadyThere = this.factoryBeanObjectCache.get(beanName);
 					if (alreadyThere != null) {
+						// 直接使用已存在的实例
 						object = alreadyThere;
 					}
 					else {
+						/*
+						 * 使用后处理器处理刚刚创建的bean实例
+						 */
 						if (shouldPostProcess) {
 							if (isSingletonCurrentlyInCreation(beanName)) {
 								// Temporarily return non-post-processed object, not storing it yet..
 								return object;
 							}
+							// 单例创建前处理，将beanName放进singletonsCurrentlyInCreation
 							beforeSingletonCreation(beanName);
 							try {
+								// 执行后置处理
+								// AbstractAutowireCapableBeanFactory.postProcessObjectFromFactoryBean
 								object = postProcessObjectFromFactoryBean(object, beanName);
 							}
 							catch (Throwable ex) {
@@ -129,9 +137,11 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 										"Post-processing of FactoryBean's singleton object failed", ex);
 							}
 							finally {
+								// 创建后处理，从singletonsCurrentlyInCreation中删除beanName
 								afterSingletonCreation(beanName);
 							}
 						}
+						// 放入缓存
 						if (containsSingleton(beanName)) {
 							this.factoryBeanObjectCache.put(beanName, object);
 						}
@@ -141,6 +151,7 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 			}
 		}
 		else {
+			// 非单例处理，（每次都创建新的）
 			Object object = doGetObjectFromFactoryBean(factory, beanName);
 			if (shouldPostProcess) {
 				try {

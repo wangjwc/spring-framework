@@ -255,7 +255,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		 * 为了解决循环依赖，spring创建bean之前会先创建bean的ObjectFactory，并加入缓存中
 		 */
 
-		// 尝试从缓存或者singletonFactories中的ObjectFactory中获取
+		// 尝试从缓存或者singletonFactories中的ObjectFactory中获取（三级缓存设计）
 		// Eagerly check singleton cache for manually registered singletons.
 		Object sharedInstance = getSingleton(beanName);
 		if (sharedInstance != null && args == null) {
@@ -268,10 +268,10 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					logger.trace("Returning cached instance of singleton bean '" + beanName + "'");
 				}
 			}
-			bean = getObjectForBeanInstance(sharedInstance, name, beanName, null);
-		}
 
-		else {
+			// 处理FactoryBean，如果是FactoryBean则返回FactoryBean创建的实例，否则不做处理直接返回原实例
+			bean = getObjectForBeanInstance(sharedInstance, name, beanName, null);
+		} else {
 			// Fail if we're already creating this bean instance:
 			// We're assumably within a circular reference.
 			if (isPrototypeCurrentlyInCreation(beanName)) {
@@ -329,6 +329,9 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 				// Create bean instance.
 				if (mbd.isSingleton()) {
+					/*
+					 * bean的加载过程
+					 */
 					sharedInstance = getSingleton(beanName, () -> {
 						try {
 							return createBean(beanName, mbd, args);
@@ -1863,10 +1866,11 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				mbd = getMergedLocalBeanDefinition(beanName);
 			}
 
-			// 是否是用户定义（'人造的'）的（区别与spring内置的）
+			// 是否是spring内置的bean
 			boolean synthetic = (mbd != null && mbd.isSynthetic());
 
 			// 从FactoryBean中获取实例
+			// shouldPostProcess = !synthetic，即：如果是用户自定义的，那么在bean实例创建后，执行后处理器
 			object = getObjectFromFactoryBean(factory, beanName, !synthetic);
 		}
 		return object;
