@@ -78,6 +78,21 @@ public class HelloWorldDependInject {
 	}
 
 	/**
+	 * 按名称自动注入
+	 */
+	public static class InjectAutowireByType extends HelloWorldDependInject {
+		public static void main(String[] args) throws IOException {
+			/*
+			 * hello-depend.xml中的property profile
+			 */
+			MyEnvironmentCapableRegistry registry = load("autowireByType");
+			SampleA sampleA = (SampleA)registry.getBean("sampleA");
+			System.out.println(sampleA.getInfo());
+			System.out.println(sampleA.getSampleB().getInfo());
+		}
+	}
+
+	/**
 	 * 注解方式依赖注入
 	 */
 	public static class InjectByAnnotation extends HelloWorldDependInject {

@@ -1573,6 +1573,10 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 				// even if it technically is a unsatisfied, non-simple property.
 				if (Object.class != pd.getPropertyType()) {
 					MethodParameter methodParam = BeanUtils.getWriteMethodParameter(pd);
+
+					/*
+					 * 获取依赖的bean，加入pvs，供后续注入
+					 */
 					// Do not allow eager init for type matching in case of a prioritized post-processor.
 					boolean eager = !(bw.getWrappedInstance() instanceof PriorityOrdered);
 					DependencyDescriptor desc = new AutowireByTypeDependencyDescriptor(methodParam, eager);
