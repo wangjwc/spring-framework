@@ -14,6 +14,26 @@
 		</bean>
 	</beans>
 
+	<beans profile="autowireByName">
+		<bean id="sampleA" class="org.springframework.learn.beans.SampleA" autowire="byName">
+			<property name="info" value="sampleA info from xml, profile=autowireByName"/>
+		</bean>
+
+		<bean id="sampleB" class="org.springframework.learn.beans.SampleB">
+			<property name="info" value="sampleB info from xml, profile=autowireByName"/>
+		</bean>
+	</beans>
+
+	<beans profile="autowireByType">
+		<bean id="sampleA" class="org.springframework.learn.beans.SampleA" autowire="byType">
+			<property name="info" value="sampleA info from xml, profile=autowireByType"/>
+		</bean>
+
+		<bean id="sampleB" class="org.springframework.learn.beans.SampleB">
+			<property name="info" value="sampleB info from xml, profile=autowireByType"/>
+		</bean>
+	</beans>
+
 	<beans profile="annotation">
 		<!-- InstantiationAwareBeanPostProcessorAdapter -->
 		<bean class="org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor"/>

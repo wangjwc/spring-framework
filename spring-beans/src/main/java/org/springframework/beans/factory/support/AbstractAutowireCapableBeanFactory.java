@@ -1473,6 +1473,8 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 					/*
 					 * 使用实例化后处理器处理所有property, 这里提供了在属性注入前进行最后处理的机会，
 					 * 如RequiredAnnotationBeanPostProcessor.postProcessPropertyValues中对@Required的检查（已经废弃）
+					 *
+					 * pd: AutowiredAnnotationBeanPostProcessor处理器在这会注入@Autowire注解指定的依赖
 					 */
 					PropertyValues pvsToUse = ibp.postProcessProperties(pvs, bw.getWrappedInstance(), beanName);
 					if (pvsToUse == null) {
@@ -1516,11 +1518,18 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	protected void autowireByName(
 			String beanName, AbstractBeanDefinition mbd, BeanWrapper bw, MutablePropertyValues pvs) {
 
+		// 寻找需要依赖注入的属性
 		String[] propertyNames = unsatisfiedNonSimpleProperties(mbd, bw);
 		for (String propertyName : propertyNames) {
 			if (containsBean(propertyName)) {
+				// 递归初始化依赖bean
 				Object bean = getBean(propertyName);
+				// 将属性填入pvs（供最后注入使用）
 				pvs.add(propertyName, bean);
+				// 添加依赖关系缓存
+				// 当A依赖B时
+				// dependentBeanMap B->A
+				// dependenciesForBeanMap A -> B
 				registerDependentBean(propertyName, beanName);
 				if (logger.isTraceEnabled()) {
 					logger.trace("Added autowiring by name from bean name '" + beanName +
