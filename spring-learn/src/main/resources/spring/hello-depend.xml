@@ -1,0 +1,29 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xsi:schemaLocation="
+		http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
+		">
+	<beans profile="property">
+		<bean id="sampleA" class="org.springframework.learn.beans.SampleA">
+			<property name="info" value="sampleA info from xml, profile=property"/>
+			<property name="sampleB" ref="sampleB"/>
+		</bean>
+
+		<bean id="sampleB" class="org.springframework.learn.beans.SampleB">
+			<property name="info" value="sampleB info from xml, profile=property"/>
+		</bean>
+	</beans>
+
+	<beans profile="annotation">
+		<!-- InstantiationAwareBeanPostProcessorAdapter -->
+		<bean class="org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor"/>
+
+		<bean id="sampleA" class="org.springframework.learn.beans.SampleA">
+			<property name="info" value="sampleA info from xml, profile=annotation"/>
+		</bean>
+
+		<bean id="sampleB" class="org.springframework.learn.beans.SampleB">
+			<property name="info" value="sampleB info from xml, profile=annotation"/>
+		</bean>
+	</beans>
+</beans>

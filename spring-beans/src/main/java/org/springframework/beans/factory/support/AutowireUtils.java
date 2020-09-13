@@ -92,8 +92,11 @@ abstract class AutowireUtils {
 		}
 		if (!wm.getDeclaringClass().getName().contains("$$")) {
 			// Not a CGLIB method so it's OK.
+			// 不是cglib属性，不排除
 			return false;
 		}
+
+		// 是cglib属性，但是该属性在父类中也有时，不排除
 		// It was declared by CGLIB, but we might still want to autowire it
 		// if it was actually declared by the superclass.
 		Class<?> superclass = wm.getDeclaringClass().getSuperclass();
