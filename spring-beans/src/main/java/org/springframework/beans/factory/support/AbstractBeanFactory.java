@@ -1319,6 +1319,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	}
 
 	/**
+	 * 返回给定bean的RootBeanDefinition，如果该bean是子bean，则合并父bean的相关属性
 	 * Return a RootBeanDefinition for the given bean, by merging with the
 	 * parent if the given bean's definition is a child bean definition.
 	 * @param beanName the name of the bean definition
@@ -1338,12 +1339,15 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 			// Check with full lock now in order to enforce the same merged instance.
 			if (containingBd == null) {
+				// 取缓存（没有父bean时，一般不需要多次重复处理）
 				mbd = this.mergedBeanDefinitions.get(beanName);
 			}
 
+			// 没有缓存（或者没有取缓存），或者缓存被标注为过期时，重新生成
 			if (mbd == null || mbd.stale) {
 				previous = mbd;
 				if (bd.getParentName() == null) {
+					// 没有parent
 					// Use copy of given root bean definition.
 					if (bd instanceof RootBeanDefinition) {
 						mbd = ((RootBeanDefinition) bd).cloneBeanDefinition();
@@ -1353,14 +1357,25 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					}
 				}
 				else {
+					// 有parent时，合并parent
 					// Child bean definition: needs to be merged with parent.
 					BeanDefinition pbd;
 					try {
+						// 获取真正的parentBeanName
 						String parentBeanName = transformedBeanName(bd.getParentName());
 						if (!beanName.equals(parentBeanName)) {
+							// 获取parent
 							pbd = getMergedBeanDefinition(parentBeanName);
 						}
 						else {
+							/*
+							 * 如果beanName和parentBeanName相同，那么便在父容器中查找
+							 * 父子容器的场景（
+							 * 	在使用spring mvc时，于tomcat中配置了spring的servlet
+							 * 	servlet初始化时会先创建一个容器A，然后查找资源目录下的{servletName}-servlet.xml配置文件创建容器B，
+							 *  并且设置A为B的父容器。父容器A中加载处理controller外的bean，子容器B中加载controller的bean
+							 * ）
+							 */
 							BeanFactory parent = getParentBeanFactory();
 							if (parent instanceof ConfigurableBeanFactory) {
 								pbd = ((ConfigurableBeanFactory) parent).getMergedBeanDefinition(parentBeanName);
@@ -1376,16 +1391,24 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 						throw new BeanDefinitionStoreException(bd.getResourceDescription(), beanName,
 								"Could not resolve parent bean definition '" + bd.getParentName() + "'", ex);
 					}
+
+					/*
+					 * 执行合并
+					 */
+					// 1、深拷贝parent的属性
 					// Deep copy with overridden values.
 					mbd = new RootBeanDefinition(pbd);
+					// 2、用child bd中的属性覆盖parent bd中的属性
 					mbd.overrideFrom(bd);
 				}
 
+				// 默认单例
 				// Set default singleton scope, if not configured before.
 				if (!StringUtils.hasLength(mbd.getScope())) {
 					mbd.setScope(SCOPE_SINGLETON);
 				}
 
+				// parent bd不是单例时，将child bd也设置为非单例
 				// A bean contained in a non-singleton bean cannot be a singleton itself.
 				// Let's correct this on the fly here, since this might be the result of
 				// parent-child merging for the outer bean, in which case the original inner bean

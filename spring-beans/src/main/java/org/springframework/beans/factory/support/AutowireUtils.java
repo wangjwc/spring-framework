@@ -131,9 +131,15 @@ abstract class AutowireUtils {
 	 * @return the resolved value
 	 */
 	public static Object resolveAutowiringValue(Object autowiringValue, Class<?> requiredType) {
+		// autowiringValue实现里ObjectFactory接口，并且不是是requiredType的实例（isInstance相当于instanceOf）
+		// 则使用ObjectFactory.getObject生成真正的bean
 		if (autowiringValue instanceof ObjectFactory && !requiredType.isInstance(autowiringValue)) {
 			ObjectFactory<?> factory = (ObjectFactory<?>) autowiringValue;
+
+			// 如果autowiringValue实现序列化接口，并且requiredType是接口
 			if (autowiringValue instanceof Serializable && requiredType.isInterface()) {
+				// jkd代理
+				// todo 暂时不明白为何使用jdk代理
 				autowiringValue = Proxy.newProxyInstance(requiredType.getClassLoader(),
 						new Class<?>[] {requiredType}, new ObjectFactoryDelegatingInvocationHandler(factory));
 			}
@@ -283,6 +289,7 @@ abstract class AutowireUtils {
 		public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 			String methodName = method.getName();
 			if (methodName.equals("equals")) {
+				// 只有同一个对象才相等
 				// Only consider equal when proxies are identical.
 				return (proxy == args[0]);
 			}

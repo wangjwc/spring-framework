@@ -72,6 +72,8 @@ public abstract class BeanFactoryUtils {
 	}
 
 	/**
+	 * 如果没有有&前缀，则直接返回
+	 * 否则去掉前缀后缓存并返回
 	 * Return the actual bean name, stripping out the factory dereference
 	 * prefix (if any, also stripping repeated factory prefixes if found).
 	 * @param name the name of the bean
