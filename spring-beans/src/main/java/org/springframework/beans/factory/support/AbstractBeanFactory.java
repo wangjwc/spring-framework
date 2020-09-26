@@ -197,11 +197,25 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	// Implementation of BeanFactory interface
 	//---------------------------------------------------------------------
 
+	/**
+	 * 按名称获取bean（如果名称时别名，则先解析）（如果bean没有实例化则实例化，单例bean则先读缓存）
+	 * @param name the name of the bean to retrieve
+	 * @return
+	 * @throws BeansException
+	 */
 	@Override
 	public Object getBean(String name) throws BeansException {
 		return doGetBean(name, null, null, false);
 	}
 
+	/**
+	 * 按类型获取bean（如果bean没有实例化则实例化，单例bean则先读缓存）
+	 * @param name the name of the bean to retrieve
+	 * @param requiredType type the bean must match; can be an interface or superclass
+	 * @param <T>
+	 * @return
+	 * @throws BeansException
+	 */
 	@Override
 	public <T> T getBean(String name, Class<T> requiredType) throws BeansException {
 		return doGetBean(name, requiredType, null, false);
@@ -308,16 +322,20 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				RootBeanDefinition mbd = getMergedLocalBeanDefinition(beanName);
 				checkMergedBeanDefinition(mbd, beanName, args);
 
+				// 声明当前bean创建的依赖（即：当前bean的初始化依赖其他的bean先实例化）
 				// Guarantee initialization of beans that the current bean depends on.
 				String[] dependsOn = mbd.getDependsOn();
 				if (dependsOn != null) {
 					for (String dep : dependsOn) {
+						// 声明了依赖关系，便无法解决循环依赖的问题
 						if (isDependent(beanName, dep)) {
 							throw new BeanCreationException(mbd.getResourceDescription(), beanName,
 									"Circular depends-on relationship between '" + beanName + "' and '" + dep + "'");
 						}
+						// 注册依赖关系缓存（Map<beanName, Set<dependsOn>>)
 						registerDependentBean(dep, beanName);
 						try {
+							// 触发依赖bean的创建
 							getBean(dep);
 						}
 						catch (NoSuchBeanDefinitionException ex) {
@@ -361,7 +379,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					}
 					bean = getObjectForBeanInstance(prototypeInstance, name, beanName, mbd);
 				}
-
+				// 自定义scope
 				else {
 					String scopeName = mbd.getScope();
 					if (!StringUtils.hasLength(scopeName)) {

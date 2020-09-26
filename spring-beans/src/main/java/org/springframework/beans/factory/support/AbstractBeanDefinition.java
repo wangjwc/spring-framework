@@ -162,6 +162,7 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 
 	/**
 	 * 当前bean的初始化依赖其他的bean先实例化，此处存其他bean的name
+	 * 对应xml中的depends-on
 	 */
 	@Nullable
 	private String[] dependsOn;
