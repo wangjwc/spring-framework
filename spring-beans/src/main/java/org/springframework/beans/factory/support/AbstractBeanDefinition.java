@@ -169,6 +169,7 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	/**
 	 * 当值为false时，容器在查找自动装配对象时，将不考虑该bean。
 	 * 即他不会成为其他bean自动装配的候选者
+	 * 对应xml中的 autowire-candidate属性
 	 */
 	private boolean autowireCandidate = true;
 
@@ -233,6 +234,9 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	@Nullable
 	private String initMethodName;
 
+	/**
+	 * 对应xml中的destroy-method
+	 */
 	@Nullable
 	private String destroyMethodName;
 

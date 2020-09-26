@@ -88,7 +88,10 @@ public class HelloWorldDependInject {
 			MyEnvironmentCapableRegistry registry = load("autowireByType");
 			SampleA sampleA = (SampleA)registry.getBean("sampleA");
 			System.out.println(sampleA.getInfo());
-			System.out.println(sampleA.getSampleB().getInfo());
+			System.out.println("single===>" + sampleA.getSampleB().getInfo());
+			System.out.println("array===>" + sampleA.getArr()[0].getInfo());
+			System.out.println("list===>" + sampleA.getList().get(0).getInfo());
+			System.out.println("map===>" + sampleA.getMap());
 		}
 	}
 
