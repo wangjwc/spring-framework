@@ -15,7 +15,7 @@ import java.io.IOException;
  * @Date : 2020/8/10 22:27
  * @Description :
  */
-public class HelloWorld {
+public class BeanFactoryHello {
 	public static void main(String[] args) throws IOException {
 		ClassPathResource classPathResource = new ClassPathResource("/spring/hello.xml");
 		System.out.println(classPathResource.getFile().getAbsolutePath());
