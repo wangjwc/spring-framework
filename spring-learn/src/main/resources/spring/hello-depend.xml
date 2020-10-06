@@ -3,6 +3,7 @@
 	   xsi:schemaLocation="
 		http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
 		">
+	<!--按照配置依赖注入-->
 	<beans profile="property">
 		<bean id="sampleA" class="org.springframework.learn.beans.SampleA">
 			<property name="info" value="sampleA info from xml, profile=property"/>
@@ -14,6 +15,7 @@
 		</bean>
 	</beans>
 
+	<!-- 支持按名称自动注入 -->
 	<beans profile="autowireByName">
 		<bean id="sampleA" class="org.springframework.learn.beans.SampleA" autowire="byName">
 			<property name="info" value="sampleA info from xml, profile=autowireByName"/>
@@ -24,6 +26,7 @@
 		</bean>
 	</beans>
 
+	<!-- 支持按类型自动注入 -->
 	<beans profile="autowireByType">
 		<bean id="sampleA" class="org.springframework.learn.beans.SampleA" autowire="byType">
 			<property name="info" value="sampleA info from xml, profile=autowireByType"/>
@@ -34,6 +37,7 @@
 		</bean>
 	</beans>
 
+	<!--支持按注解自动注入 -->
 	<beans profile="annotation">
 		<!-- InstantiationAwareBeanPostProcessorAdapter -->
 		<bean class="org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor"/>

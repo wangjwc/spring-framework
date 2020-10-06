@@ -1,0 +1,38 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xsi:schemaLocation="
+		http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
+		">
+
+	<!--
+		自定义-PropertyEditor，
+		实际上是执行了 @see org.springframework.beans.factory.config.BeanFactoryPostProcessor.postProcessBeanFactory
+	-->
+	<bean class="org.springframework.beans.factory.config.CustomEditorConfigurer">
+		<!-- 自定义Editor -->
+		<property name="customEditors">
+			<map>
+				<!-- 添加Date类型处理器，当遇到Date类型属性时，会调用自定义解析器解析，将结果注入 -->
+				<!-- ps这里可以直接使用字符串写类路径，因为在context初始化时已经将默认将对应的ClassEditor加入了 -->
+				<entry key="java.util.Date" value="org.springframework.learn.beans.propertyeditor.custom.PropertyEditorForDate"/>
+			</map>
+		</property>
+		<!-- 自定义Editor注册器，可以起到和customEditors同样的效果-->
+		<property name="propertyEditorRegistrars">
+			<list>
+				<!-- 使用注册器注册多个editor -->
+				<bean class="org.springframework.learn.beans.propertyeditor.MyPropertyEditorRegistrar"/>
+			</list>
+		</property>
+	</bean>
+
+	<bean id="sampleBean" class="org.springframework.learn.beans.SampleBean">
+		<property name="testStr" value="from xml property element"/>
+	</bean>
+
+	<bean id="propertyEditorTestBean" class="org.springframework.learn.beans.propertyeditor.PropertyEditorTestBean">
+		<property name="dateValue" value="2020-01-01"/>
+		<property name="bigDecimalValue" value="2020.0101"/>
+		<property name="stringArrayValue" value="s1,s2,s3"/>
+	</bean>
+</beans>
