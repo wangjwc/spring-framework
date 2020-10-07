@@ -692,12 +692,26 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		 * 生效时机：
 		 * 这里将注册器放在propertyEditorRegistrars中，bean实例化时遍历并执行PropertyEditorRegistrar#registerCustomEditors
 		 * (即，每个bean实例化时都会调用ResourceEditorRegistrar#registerCustomEditors）
+		 * trace:
 		 *   => org.springframework.beans.factory.support.AbstractBeanFactory#initBeanWrapper
 		 *     => org.springframework.beans.factory.support.AbstractBeanFactory#registerCustomEditors
 		 *       => org.springframework.beans.support.ResourceEditorRegistrar#registerCustomEditors
 		 *         => org.springframework.beans.PropertyEditorRegistrySupport#registerCustomEditor (这里的PropertyEditorRegistrySupport即BeanWrapper）
 		 *           => this.customEditors.put(requiredType, propertyEditor);
 		 * 最后用于填充bean属性时的值转换
+		 *
+		 * 自定义编辑器：
+		 * <bean class="org.springframework.beans.factory.config.CustomEditorConfigurer">......</bean>
+		 *   => CustomEditorConfigurer extend BeanFactoryPostProcessor
+		 * trace:
+		 *  => org.springframework.context.support.AbstractApplicationContext.refresh
+		 *   => org.springframework.context.support.AbstractApplicationContext.invokeBeanFactoryPostProcessors（这一步是在bean实例化之前）
+		 *     => org.springframework.context.support.PostProcessorRegistrationDelegate.invokeBeanFactoryPostProcessors
+		 *      => 从bean定义中获取所有org.springframework.beans.factory.config.BeanFactoryPostProcessor
+		 *       => org.springframework.context.support.PostProcessorRegistrationDelegate.invokeBeanFactoryPostProcessors
+		 *        => 执行 org.springframework.beans.factory.config.BeanFactoryPostProcessor.postProcessBeanFactory
+		 *         => beanFactory.addPropertyEditorRegistrar(propertyEditorRegistrar) (最终还是调用这个来添加）
+		 *
 		 * 另外：自定义编辑器实现org.springframework.beans.factory.config.CustomEditorConfigurer实际上是借助了BeanFactoryPostProcessor接口的处理
 		 * ，原理待补充
 		 *
