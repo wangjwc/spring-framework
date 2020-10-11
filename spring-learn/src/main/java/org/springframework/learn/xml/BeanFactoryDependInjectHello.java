@@ -19,6 +19,12 @@ import java.io.IOException;
  * @since 2020/8/10 22:27
  */
 public class BeanFactoryDependInjectHello {
+	/**
+	 * 用于设置环境变量
+	 * XmlBeanDefinitionReader初始化时，如果BeanDefinitionRegistry实现了EnvironmentCapable，则使用registry获取Environment
+	 * 否则新初始化一个StandardEnvironment，并且使用System.getProperties和System.getenv()获取系统属性和环境变量
+	 * 因此也可以直接使用System.getProperties().put("spring.profiles.active", "dev");设置profile
+	 */
 	public static class MyEnvironmentCapableRegistry extends DefaultListableBeanFactory implements EnvironmentCapable {
 		private StandardEnvironment environment = new StandardEnvironment();
 
