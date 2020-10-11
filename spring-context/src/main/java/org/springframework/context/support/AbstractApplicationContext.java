@@ -696,7 +696,8 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		 *   => org.springframework.beans.factory.support.AbstractBeanFactory#initBeanWrapper
 		 *     => org.springframework.beans.factory.support.AbstractBeanFactory#registerCustomEditors
 		 *       => org.springframework.beans.support.ResourceEditorRegistrar#registerCustomEditors
-		 *         => org.springframework.beans.PropertyEditorRegistrySupport#registerCustomEditor (这里的PropertyEditorRegistrySupport即BeanWrapper）
+		 *         => org.springframework.beans.PropertyEditorRegistrySupport#registerCustomEditor
+		 * 			(这里的PropertyEditorRegistrySupport即BeanWrapper，BeanWrapperImpl继承了PropertyEditorRegistrySupport）
 		 *           => this.customEditors.put(requiredType, propertyEditor);
 		 * 最后用于填充bean属性时的值转换
 		 *
@@ -720,12 +721,35 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		/*
 		 *
 		 * 添加BeanPostProcessor，用于在bean初始化后，对于实现了几个特定的aware接口的bean执行对应的set方法
-		 *  @see org.springframework.context.support.ApplicationContextAwareProcessor.invokeAwareInterfaces
+		 *  @see org.springframework.context.support.ApplicationContextAwareProcessor#invokeAwareInterfaces
+		 * 补充：
+		 * 	所有BeanPostProcessor都用于在bean初始化前后拓展处理
+		 *  特殊的：
+		 *    InstantiationAwareBeanPostProcessor(1)； postProcessBeforeInstantiation
+		 *        在bean实例化前调用，给用户使用BeanPostProcessors自定义代理实现的机会，
+		 *        如果用户自定义了代理实现，则不会继续后续实例化流程
+		 *
+		 *    SmartInstantiationAwareBeanPostProcessor(1)：determineCandidateConstructors
+		 *        在bean实例化前调用，获取候选构造方法列表
+		 *
+		 *    MergedBeanDefinitionPostProcessor： postProcessMergedBeanDefinition
+		 *        bean实例化前调用，给予用户最后的修改BeanDefinition属性的机会
+		 *
+		 *    SmartInstantiationAwareBeanPostProcessor(2)： getEarlyBeanReference
+		 *        在bean实例化后调用，依赖注入前调用，返回的值将被包装成ObjectFactory后放入三级缓存（可用于支持aop等拓展）
+		 *
+		 *    InstantiationAwareBeanPostProcessor(2): postProcessAfterInstantiation
+		 *        在填充依赖属性前调用，给予用户最后改变bean的机会
+		 *    InstantiationAwareBeanPostProcessor(3): postProcessProperties
+		 * 	      在填充依赖属性时调用，给予用户修改依赖属性的机会，比如@Autowire注解便是在这里实现的
+		 *
+		 *    DestructionAwareBeanPostProcessor：postProcessBeforeDestruction
+		 *        在bean销毁前调用，用于执行资源回收拓展
 		 */
 		beanFactory.addBeanPostProcessor(new ApplicationContextAwareProcessor(this));
 
 		/*
-		 * 设置几个要忽略依赖（即以下几个接口类型的属性忽略自动装配）
+		 * 设置几个要忽略依赖（即以下几个接口类型的属性忽略自动装配），因为已经在上一步中的ApplicationContextAwareProcessor中处理了
 		 */
 		beanFactory.ignoreDependencyInterface(EnvironmentAware.class);
 		beanFactory.ignoreDependencyInterface(EmbeddedValueResolverAware.class);
@@ -735,7 +759,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		beanFactory.ignoreDependencyInterface(ApplicationContextAware.class);
 
 		/*
-		 * 设置几个自动装配的特殊规则
+		 * 设置几个自动装配的特殊规则，即如果bean依赖的类型是以下几个，则直接使用此处注册的缓存注入到bean中
 		 */
 		// BeanFactory interface not registered as resolvable type in a plain factory.
 		// MessageSource registered (and found for autowiring) as a bean.
@@ -751,7 +775,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		beanFactory.addBeanPostProcessor(new ApplicationListenerDetector(this));
 
 		/*
-		 * 增加对AspectJ的支持(loadTimeWeaver)
+		 * 增加对AspectJ的支持(loadTimeWeaver) // TODO 2020/10/11 18:18 待研究
 		 */
 		// Detect a LoadTimeWeaver and prepare for weaving, if found.
 		if (beanFactory.containsBean(LOAD_TIME_WEAVER_BEAN_NAME)) {
@@ -765,12 +789,15 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		 */
 		// Register default environment beans.
 		if (!beanFactory.containsLocalBean(ENVIRONMENT_BEAN_NAME)) {
+			// ConfigurableEnvironment
 			beanFactory.registerSingleton(ENVIRONMENT_BEAN_NAME, getEnvironment());
 		}
 		if (!beanFactory.containsLocalBean(SYSTEM_PROPERTIES_BEAN_NAME)) {
+			// Map
 			beanFactory.registerSingleton(SYSTEM_PROPERTIES_BEAN_NAME, getEnvironment().getSystemProperties());
 		}
 		if (!beanFactory.containsLocalBean(SYSTEM_ENVIRONMENT_BEAN_NAME)) {
+			// Map
 			beanFactory.registerSingleton(SYSTEM_ENVIRONMENT_BEAN_NAME, getEnvironment().getSystemEnvironment());
 		}
 	}
