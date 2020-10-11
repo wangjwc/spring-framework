@@ -702,7 +702,8 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		 *
 		 * 自定义编辑器：
 		 * <bean class="org.springframework.beans.factory.config.CustomEditorConfigurer">......</bean>
-		 *   => CustomEditorConfigurer extend BeanFactoryPostProcessor
+		 *   => 实际上CustomEditorConfigurer extend BeanFactoryPostProcessor
+		 *      所以，自定义编辑器最终是借助BeanFactoryPostProcessor在refresh阶段执行了beanFactory.addPropertyEditorRegistrar
 		 * trace:
 		 *  => org.springframework.context.support.AbstractApplicationContext.refresh
 		 *   => org.springframework.context.support.AbstractApplicationContext.invokeBeanFactoryPostProcessors（这一步是在bean实例化之前）
@@ -711,10 +712,6 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		 *       => org.springframework.context.support.PostProcessorRegistrationDelegate.invokeBeanFactoryPostProcessors
 		 *        => 执行 org.springframework.beans.factory.config.BeanFactoryPostProcessor.postProcessBeanFactory
 		 *         => beanFactory.addPropertyEditorRegistrar(propertyEditorRegistrar) (最终还是调用这个来添加）
-		 *
-		 * 另外：自定义编辑器实现org.springframework.beans.factory.config.CustomEditorConfigurer实际上是借助了BeanFactoryPostProcessor接口的处理
-		 * ，原理待补充
-		 *
 		 */
 		beanFactory.addPropertyEditorRegistrar(new ResourceEditorRegistrar(this, getEnvironment()));
 
