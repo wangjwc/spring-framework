@@ -24,15 +24,20 @@ public class MyBeanFactoryPostProcessor implements BeanFactoryPostProcessor {
 	private StringValueResolver valueResolver = new StringValueResolver() {
 		@Override
 		public String resolveStringValue(String strVal) {
+			/*
+			 * 当value值以GET_开头时，使用后面的字符串去获取配置
+			 */
 			//System.out.println("MyBeanFactoryPostProcessor => " + strVal);
 			PropertySources sources = configurer.getAppliedPropertySources();
+			// 这里包含environment和properties两中source，所以需要遍历
 			Iterator<PropertySource<?>> iterator = sources.iterator();
 
 			if (strVal.startsWith("GET_")) {
 				String p = strVal.substring(4);
-
 				while (iterator.hasNext()) {
+					// environment或properties
 					PropertySource<?> propertySource = iterator.next();
+					// 获取属性
 					Object value = propertySource.getProperty(p);
 					if (null != value) {
 						return "MyBeanFactoryPostProcessor: " + String.valueOf(value);
