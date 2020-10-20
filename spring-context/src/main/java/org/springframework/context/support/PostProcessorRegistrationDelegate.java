@@ -53,15 +53,20 @@ final class PostProcessorRegistrationDelegate {
 	}
 
 	/**
-	 * 处理BeanFactoryPostProcessor和BeanDefinitionRegistryPostProcessor
+	 * 激活BeanFactory处理器
+	 *
+	 * 从AbstractApplicationContext.beanFactoryPostProcessors和所有的BeanDefinition中查找BeanDefinitionRegistryPostProcessor和BeanFactoryPostProcessor，并执行他们
+	 * 1、找出所有的BeanDefinitionRegistryPostProcessor，实例化并调用其postProcessBeanDefinitionRegistry和继承自BeanFactoryPostProcessor的postProcessBeanFactory
+	 * 2、找出所有的BeanFactoryPostProcessor，实例化并调用其的postProcessBeanFactory
+	 *
 	 * 其中BeanDefinitionRegistryPostProcessor是BeanFactoryPostProcessor的子接口，增强了postProcessBeanDefinitionRegistry方法
 	 *
-	 * 两个接口都有两个来安：
-	 * 	1、硬编码方式注册（调用add方法加入到context中，然后以参数传入此方法））
-	 * 	2：配置方式注册
+	 * 典型应用
+	 * 1、BeanDefinitionRegistryPostProcessor的内部实现类ConfigurationClassPostProcessor，用于支持@Configuration、@Import、@Bean等注解
+	 * 2、BeanFactoryPostProcessor的内部实现类PropertySourcesPlaceholderConfigurer，用于处理${db.password}格式的依赖（用于获取配置属性）
 	 *
-	 * @param beanFactory 要处理的BeanFactory（比如AbstractApplicationContext中是DefaultListableBeanFactory
-	 * @param beanFactoryPostProcessors 硬编码方式入参
+	 *  @param beanFactory 要处理的BeanFactory（比如AbstractApplicationContext中是DefaultListableBeanFactory
+	 *  @param beanFactoryPostProcessors 硬编码方式入参
 	 */
 	public static void invokeBeanFactoryPostProcessors(
 			ConfigurableListableBeanFactory beanFactory, List<BeanFactoryPostProcessor> beanFactoryPostProcessors) {
