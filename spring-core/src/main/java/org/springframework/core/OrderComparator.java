@@ -73,6 +73,13 @@ public class OrderComparator implements Comparator<Object> {
 		return doCompare(o1, o2, null);
 	}
 
+	/**
+	 * 实现了PriorityOrdered接口的优先，如果都没实现或都实现了，则order小的优先
+	 * @param o1
+	 * @param o2
+	 * @param sourceProvider
+	 * @return
+	 */
 	private int doCompare(@Nullable Object o1, @Nullable Object o2, @Nullable OrderSourceProvider sourceProvider) {
 		boolean p1 = (o1 instanceof PriorityOrdered);
 		boolean p2 = (o2 instanceof PriorityOrdered);

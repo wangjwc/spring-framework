@@ -493,6 +493,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	public String[] getBeanNamesForType(@Nullable Class<?> type, boolean includeNonSingletons, boolean allowEagerInit) {
 		/*
 		 * isConfigurationFrozen：配置被冻结（即当前factory内的所有bean不能再进行修改，也不能再添加post-processed
+		 * 冻结状态在AbstractApplicationContext的refresh方法结束时调用
 		 */
 		if (!isConfigurationFrozen() || type == null || !allowEagerInit) {
 			/*
