@@ -22,6 +22,10 @@ public class SampleA {
 
 	private Map<String, SampleB> map;
 
+	public SampleA() {
+		System.out.println("----------------SampleA constructor----------------");
+	}
+
 	public String getInfo() {
 		return info;
 	}

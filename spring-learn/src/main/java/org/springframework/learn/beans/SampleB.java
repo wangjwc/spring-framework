@@ -8,6 +8,10 @@ package org.springframework.learn.beans;
 public class SampleB {
 	private String info = "default info SampleB";
 
+	public SampleB() {
+		System.out.println("----------------SampleB constructor----------------");
+	}
+
 	public String getInfo() {
 		return info;
 	}

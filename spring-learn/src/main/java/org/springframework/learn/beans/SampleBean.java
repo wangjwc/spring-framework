@@ -9,7 +9,7 @@ public class SampleBean {
 	private String testStr = "default str";
 
 	public SampleBean() {
-		System.out.println("SampleBean constructor");
+		System.out.println("----------------SampleBean constructor----------------");
 	}
 
 	public String getTestStr() {

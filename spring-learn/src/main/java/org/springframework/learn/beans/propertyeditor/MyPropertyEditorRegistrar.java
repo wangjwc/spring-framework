@@ -13,6 +13,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
+ * PropertyEditorRegistrar用于支持将字符串格式的属性值转换为bean中对应的属性类型
+ * 比如class类型、date类型等
  * @author wangjingwang
  * @version v1.0
  */

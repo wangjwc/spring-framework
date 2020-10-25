@@ -548,6 +548,34 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				invokeBeanFactoryPostProcessors(beanFactory);
 
 				// 注册bean处理器（仅注册，真正使用是在getBean时）
+				/*
+				 * 若要自定义处理器，可以使用InstantiationAwareBeanPostProcessorAdapter
+				 *
+				 * 搜索所有bean中的BeanPostProcessor，自动添加到BeanFactory（beanFactory.addBeanPostProcessor）
+				 * 补充：
+				 * 	所有BeanPostProcessor都用于在bean初始化前后拓展处理
+				 *  特殊的：
+				 *    InstantiationAwareBeanPostProcessor(1)； postProcessBeforeInstantiation
+				 *        在bean实例化前调用，给用户使用BeanPostProcessors自定义代理实现的机会，
+				 *        如果用户自定义了代理实现，则不会继续后续实例化流程
+				 *
+				 *    SmartInstantiationAwareBeanPostProcessor(1)：determineCandidateConstructors
+				 *        在bean实例化前调用，获取候选构造方法列表
+				 *
+				 *    MergedBeanDefinitionPostProcessor： postProcessMergedBeanDefinition
+				 *        bean实例化前调用，给予用户最后的修改BeanDefinition属性的机会
+				 *
+				 *    SmartInstantiationAwareBeanPostProcessor(2)： getEarlyBeanReference
+				 *        在bean实例化后调用，依赖注入前调用，返回的值将被包装成ObjectFactory后放入三级缓存（可用于支持aop等拓展）
+				 *
+				 *    InstantiationAwareBeanPostProcessor(2): postProcessAfterInstantiation
+				 *        在填充依赖属性前调用，给予用户最后改变bean的机会
+				 *    InstantiationAwareBeanPostProcessor(3): postProcessProperties
+				 * 	      在填充依赖属性时调用，给予用户修改依赖属性的机会，比如@Autowire注解便是在这里实现的
+				 *
+				 *    DestructionAwareBeanPostProcessor：postProcessBeforeDestruction
+				 *        在bean销毁前调用，用于执行资源回收拓展
+				 */
 				// Register bean processors that intercept bean creation.
 				registerBeanPostProcessors(beanFactory);
 

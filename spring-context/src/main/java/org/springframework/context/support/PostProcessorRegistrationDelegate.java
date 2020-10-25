@@ -283,6 +283,14 @@ final class PostProcessorRegistrationDelegate {
 		// Register BeanPostProcessorChecker that logs an info message when
 		// a bean is created during BeanPostProcessor instantiation, i.e. when
 		// a bean is not eligible for getting processed by all BeanPostProcessors.
+		/*
+		 * BeanPostProcessorChecker用于日志信息打印；
+		 * 当一个bean在BeanPostProcessor还未实例化并注册时便已经被创建，则该处理器便会打印信息：
+		 * 即：该bean未被所有的处理器处理时，打印日志通知用户
+		 *
+		 * 举例：当一个bean在被@Bean注解实例化时，该bean和其依赖都会被提前初始化
+		 * （ps：@Bean是在invokeBeanFactoryPostProcessors阶段初始化的）
+		 */
 		int beanProcessorTargetCount = beanFactory.getBeanPostProcessorCount() + 1 + postProcessorNames.length;
 		beanFactory.addBeanPostProcessor(new BeanPostProcessorChecker(beanFactory, beanProcessorTargetCount));
 
