@@ -541,7 +541,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				 * 2、找出所有的BeanFactoryPostProcessor，实例化并调用其的postProcessBeanFactory
 				 *
 				 * 典型应用
-				 * 1、BeanDefinitionRegistryPostProcessor的内部实现类ConfigurationClassPostProcessor，用于支持@Configuration、@Import、@Bean等注解
+				 * 1、BeanDefinitionRegistryPostProcessor的内部实现类ConfigurationClassPostProcessor，用于支持 @Configuration、@Import、@Bean 等注解
 				 * 2、BeanFactoryPostProcessor的内部实现类PropertySourcesPlaceholderConfigurer，用于处理${db.password}格式的依赖（用于获取配置属性）
 				 */
 				// Invoke factory processors registered as beans in the context.
