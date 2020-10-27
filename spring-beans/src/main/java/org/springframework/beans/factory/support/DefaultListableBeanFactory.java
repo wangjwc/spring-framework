@@ -183,6 +183,9 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	@Nullable
 	private volatile String[] frozenBeanDefinitionNames;
 
+	/*
+	 * 配置被冻结（即当前factory内的所有bean不能再进行修改，也不能再添加post-processed）
+	 */
 	/** Whether bean definition metadata may be cached for all beans. */
 	private volatile boolean configurationFrozen = false;
 

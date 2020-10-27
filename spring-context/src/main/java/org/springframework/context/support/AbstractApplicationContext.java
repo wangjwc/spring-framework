@@ -16,21 +16,8 @@
 
 package org.springframework.context.support;
 
-import java.io.IOException;
-import java.lang.annotation.Annotation;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.springframework.beans.BeansException;
 import org.springframework.beans.CachedIntrospectionResults;
 import org.springframework.beans.factory.BeanFactory;
@@ -40,29 +27,8 @@ import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.support.ResourceEditorRegistrar;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
-import org.springframework.context.ApplicationEvent;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.ApplicationEventPublisherAware;
-import org.springframework.context.ApplicationListener;
-import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.EmbeddedValueResolverAware;
-import org.springframework.context.EnvironmentAware;
-import org.springframework.context.HierarchicalMessageSource;
-import org.springframework.context.LifecycleProcessor;
-import org.springframework.context.MessageSource;
-import org.springframework.context.MessageSourceAware;
-import org.springframework.context.MessageSourceResolvable;
-import org.springframework.context.NoSuchMessageException;
-import org.springframework.context.PayloadApplicationEvent;
-import org.springframework.context.ResourceLoaderAware;
-import org.springframework.context.event.ApplicationEventMulticaster;
-import org.springframework.context.event.ContextClosedEvent;
-import org.springframework.context.event.ContextRefreshedEvent;
-import org.springframework.context.event.ContextStartedEvent;
-import org.springframework.context.event.ContextStoppedEvent;
-import org.springframework.context.event.SimpleApplicationEventMulticaster;
+import org.springframework.context.*;
+import org.springframework.context.event.*;
 import org.springframework.context.expression.StandardBeanExpressionResolver;
 import org.springframework.context.weaving.LoadTimeWeaverAware;
 import org.springframework.context.weaving.LoadTimeWeaverAwareProcessor;
@@ -82,6 +48,11 @@ import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.ReflectionUtils;
+
+import java.io.IOException;
+import java.lang.annotation.Annotation;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Abstract implementation of the {@link org.springframework.context.ApplicationContext}
@@ -575,6 +546,16 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				 *
 				 *    DestructionAwareBeanPostProcessor：postProcessBeforeDestruction
 				 *        在bean销毁前调用，用于执行资源回收拓展
+				 *
+				 * 特殊的：
+				 *    1、AutowiredAnnotationBeanPostProcessor：用于解析bean的构造方法参数列表
+				 * 		注意点：
+				 * 			假如某个bean在该处理器注册前实例化，且没有无参构造函数时，会实例化失败
+				 * 			（比如，在@Configuration类中注册了一个BeanFactoryPostProcessor，
+				 * 				或者注册了BeanPostProcessor且优先级比AutowiredAnnotationBeanPostProcessor高时）
+				 *
+				 * 使用SpringBoot时，关注以下方法中注册的注解
+				 *  @see org.springframework.context.annotation.AnnotationConfigUtils#registerAnnotationConfigProcessors
 				 */
 				// Register bean processors that intercept bean creation.
 				registerBeanPostProcessors(beanFactory);
@@ -595,7 +576,12 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				// Check for listener beans and register them.
 				registerListeners();
 
-				// 初始化剩下的单例实例（非惰性加载）
+				/*
+				 * 初始化非延迟加载单例（即实例化所有非lazy的，且在之前步骤中没有初始化的单例bean）
+				 * 1、BeanFactory初始化
+				 * 2、ConversionService、配置冻结等
+				 * 3、not-lazy单例的初始化
+				 */
 				// Instantiate all remaining (non-lazy-init) singletons.
 				finishBeanFactoryInitialization(beanFactory);
 
@@ -1009,6 +995,9 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * initializing all remaining singleton beans.
 	 */
 	protected void finishBeanFactoryInitialization(ConfigurableListableBeanFactory beanFactory) {
+		/*
+		 * 初始化ConversionService
+		 */
 		// Initialize conversion service for this context.
 		if (beanFactory.containsBean(CONVERSION_SERVICE_BEAN_NAME) &&
 				beanFactory.isTypeMatch(CONVERSION_SERVICE_BEAN_NAME, ConversionService.class)) {
@@ -1016,6 +1005,10 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 					beanFactory.getBean(CONVERSION_SERVICE_BEAN_NAME, ConversionService.class));
 		}
 
+		/*
+		 * 如果没有ValueResolver（比如PropertyPlaceholderConfigurer），则注册一个默认的
+		 * （ps：PlaceholderConfigurerSupport中会调用addEmbeddedValueResolver注册解析器）
+		 */
 		// Register a default embedded value resolver if no bean post-processor
 		// (such as a PropertyPlaceholderConfigurer bean) registered any before:
 		// at this point, primarily for resolution in annotation attribute values.
@@ -1023,6 +1016,11 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 			beanFactory.addEmbeddedValueResolver(strVal -> getEnvironment().resolvePlaceholders(strVal));
 		}
 
+		/*
+		 * 初始化实现了LoadTimeWeaverAware的Bean
+		 *
+		 * 核心模块中（context、bean、core）只有AspectJWeavingEnabler实现了LoadTimeWeaverAware接口，用于实现aop静态代理
+		 */
 		// Initialize LoadTimeWeaverAware beans early to allow for registering their transformers early.
 		String[] weaverAwareNames = beanFactory.getBeanNamesForType(LoadTimeWeaverAware.class, false, false);
 		for (String weaverAwareName : weaverAwareNames) {
@@ -1032,9 +1030,11 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		// Stop using the temporary ClassLoader for type matching.
 		beanFactory.setTempClassLoader(null);
 
+		// 冻结factory（beanDefinition不能再修改，同时在执行一些获取操作时会缓存bean的信息
 		// Allow for caching all bean definition metadata, not expecting further changes.
 		beanFactory.freezeConfiguration();
 
+		// 实例化所有non-lazy-init的单例bean
 		// Instantiate all remaining (non-lazy-init) singletons.
 		beanFactory.preInstantiateSingletons();
 	}
