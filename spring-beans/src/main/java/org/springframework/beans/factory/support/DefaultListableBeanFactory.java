@@ -888,12 +888,23 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		// While this may not be part of the regular factory bootstrap, it does otherwise work fine.
 		List<String> beanNames = new ArrayList<>(this.beanDefinitionNames);
 
+		/*
+		 * 初始化所有non-lazy的单例bean
+		 */
 		// Trigger initialization of all non-lazy singleton beans...
 		for (String beanName : beanNames) {
 			RootBeanDefinition bd = getMergedLocalBeanDefinition(beanName);
+			// 非抽象、单例、not-lazy
 			if (!bd.isAbstract() && bd.isSingleton() && !bd.isLazyInit()) {
 				if (isFactoryBean(beanName)) {
+					/*
+					 * 注意：此处添加了FACTORY_BEAN_PREFIX前缀，所以是实例化FactoryBean本身，而不是FactoryBean所定义的实际bean
+					 */
 					Object bean = getBean(FACTORY_BEAN_PREFIX + beanName);
+
+					/*
+					 * FactoryBean如果实现了SmartFactoryBean，且isEagerInit() == true，则立即实例化其定义的bean
+					 */
 					if (bean instanceof FactoryBean) {
 						FactoryBean<?> factory = (FactoryBean<?>) bean;
 						boolean isEagerInit;
@@ -907,6 +918,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 									((SmartFactoryBean<?>) factory).isEagerInit());
 						}
 						if (isEagerInit) {
+							// 立即实例化bean
 							getBean(beanName);
 						}
 					}
@@ -917,6 +929,9 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			}
 		}
 
+		/*
+		 * 遍历所有bean，如果实现了SmartInitializingSingleton接口，则触发afterSingletonsInstantiated方法
+		 */
 		// Trigger post-initialization callback for all applicable beans...
 		for (String beanName : beanNames) {
 			Object singletonInstance = getSingleton(beanName);

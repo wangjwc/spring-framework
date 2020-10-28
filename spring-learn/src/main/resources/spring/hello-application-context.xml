@@ -7,6 +7,8 @@
 		<bean id="sampleBean" class="org.springframework.learn.beans.SampleBean">
 			<property name="testStr" value="from xml property element"/>
 		</bean>
+
+		<bean id="sampleFactoryBean" class="org.springframework.learn.beans.factorybean.SampleFactoryBean"/>
 	</beans>
 
 	<!-- 自定义-PropertyEditor -->

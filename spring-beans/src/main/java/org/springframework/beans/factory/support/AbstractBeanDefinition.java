@@ -144,6 +144,9 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	@Nullable
 	private String scope = SCOPE_DEFAULT;
 
+	/**
+	 * 当为true时表示：该bean定义不需要实例化，仅仅时作为具体子bean的父bean来提供一些公共属性
+	 */
 	private boolean abstractFlag = false;
 
 	@Nullable
@@ -603,6 +606,8 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	}
 
 	/**
+	 * 返回这个bean是否“抽象”
+	 * 当为true时表示：该bean定义不需要实例化，仅仅时作为具体子bean的父bean来提供一些公共属性
 	 * Return whether this bean is "abstract", i.e. not meant to be instantiated
 	 * itself but rather just serving as parent for concrete child bean definitions.
 	 */

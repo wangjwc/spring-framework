@@ -292,6 +292,9 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				throw new BeanCurrentlyInCreationException(beanName);
 			}
 
+			/*
+			 * 当前factory中不存在BeanDefinition时，从parent factory中获取实例
+			 */
 			// Check if bean definition exists in this factory.
 			BeanFactory parentBeanFactory = getParentBeanFactory();
 			if (parentBeanFactory != null && !containsBeanDefinition(beanName)) {
@@ -315,6 +318,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			}
 
 			if (!typeCheckOnly) {
+				// 打标：add to this.alreadyCreated set
 				markBeanAsCreated(beanName);
 			}
 
@@ -322,7 +326,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				RootBeanDefinition mbd = getMergedLocalBeanDefinition(beanName);
 				checkMergedBeanDefinition(mbd, beanName, args);
 
-				// 声明当前bean创建的依赖（即：当前bean的初始化依赖其他的bean先实例化）
+				// bean定义中使用depends-on直接声明当前bean依赖其他的bean（而非作为属性依赖默认声明）时，则先创建依赖的bean。这种情况下，禁止循环依赖
 				// Guarantee initialization of beans that the current bean depends on.
 				String[] dependsOn = mbd.getDependsOn();
 				if (dependsOn != null) {
@@ -1113,15 +1117,27 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	@Override
 	public boolean isFactoryBean(String name) throws NoSuchBeanDefinitionException {
 		String beanName = transformedBeanName(name);
+
+		/*
+		 * 存在单例缓存，直接匹配
+		 */
 		Object beanInstance = getSingleton(beanName, false);
 		if (beanInstance != null) {
 			return (beanInstance instanceof FactoryBean);
 		}
+
+		/*
+		 * 当前factory中没有找到beanDefinition则去parent factory中查找
+		 */
 		// No singleton instance found -> check bean definition.
 		if (!containsBeanDefinition(beanName) && getParentBeanFactory() instanceof ConfigurableBeanFactory) {
 			// No bean definition found in this factory -> delegate to parent.
 			return ((ConfigurableBeanFactory) getParentBeanFactory()).isFactoryBean(name);
 		}
+
+		/*
+		 * 根据BeanDefinition判断是否时FactoryBean
+		 */
 		return isFactoryBean(beanName, getMergedLocalBeanDefinition(beanName));
 	}
 
@@ -1844,11 +1860,13 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	}
 
 	/**
-	 * 1、如果那么含有&前缀，则校验入参beanInstance是否是FactoryBean，如果是返回，否则抛异常
+	 * 两种情况
+	 * 1、如果name包含&前缀，
+	 * 		校验入参beanInstance是否是FactoryBean，如果是直接返回返回，否则抛异常
 	 *
-	 * 2、传入的bean实例可能是普通bean，也可能是FactoryBean，
-	 * 		如果是普通bean，则直接返回
-	 * 		如果是FactoryBean，则我们调用getObject创建bean。
+	 * 2、如果name没有&前缀
+	 *		如果beanInstance是普通bean实例：直接返回
+	 *		如果beanInstance是FactoryBean：返回getObject创建bean
 	 * Get the object for the given bean instance, either the bean
 	 * instance itself or its created object in case of a FactoryBean.
 	 * @param beanInstance the shared bean instance

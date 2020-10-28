@@ -5,6 +5,7 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.lang.Nullable;
 import org.springframework.learn.beans.SampleBean;
+import org.springframework.learn.beans.factorybean.SampleFactoryBean;
 import org.springframework.learn.beans.propertyeditor.PropertyEditorTestBean;
 
 /**
@@ -34,10 +35,22 @@ public class ApplicationContextHello {
 			System.getProperties().put("spring.profiles.active", "sample");
 			String[] path = new String[]{"/spring/hello-application-context.xml"};
 			ApplicationContext context = new ClassPathXmlApplicationContext(path, true, null);
-			System.out.println(context.getEnvironment().getActiveProfiles()[0]);
+			System.out.println("profile => " + context.getEnvironment().getActiveProfiles()[0]);
 
 			SampleBean sampleBean = (SampleBean)context.getBean("sampleBean");
-			System.out.println(sampleBean.getTestStr());
+			System.out.println("sampleBean => " + sampleBean.getTestStr());
+
+			/*
+			 * 从FactoryBean创建的bean
+			 */
+			SampleFactoryBean.Bean sampleFactoryBean = (SampleFactoryBean.Bean)context.getBean("sampleFactoryBean");
+			System.out.println("SampleFactoryBean.Bean => " + sampleFactoryBean.getInfo());
+
+			/*
+			 * 获取FactoryBean的原始实例, name前添加&
+			 */
+			Object obj = context.getBean("&sampleFactoryBean");
+			System.out.println("SampleFactoryBean.Bean instance => " + obj.toString());
 		}
 	}
 
@@ -54,6 +67,9 @@ public class ApplicationContextHello {
 		}
 	}
 
+	/**
+	 * 典型的PropertySourcesPlaceholderConfigurer
+	 */
 	public static final class BeanFactoryPostProcessorTest {
 		public static void main(String[] args){
 			System.getProperties().put("spring.profiles.active", "beanFactoryPostProcessor");
