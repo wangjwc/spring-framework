@@ -1,6 +1,10 @@
 package org.springframework.learn.beans.factorybean;
 
 import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.SmartFactoryBean;
+import org.springframework.beans.factory.SmartInitializingSingleton;
+import org.springframework.context.Lifecycle;
+import org.springframework.context.SmartLifecycle;
 import org.springframework.learn.beans.SampleBean;
 
 /**
@@ -8,7 +12,7 @@ import org.springframework.learn.beans.SampleBean;
  * @Date : 2020/9/10 07:26
  * @Description :
  */
-public class SampleFactoryBean implements FactoryBean<SampleFactoryBean.Bean> {
+public class SampleFactoryBean implements SmartFactoryBean<SampleFactoryBean.Bean>, SmartLifecycle {
 
 	public SampleFactoryBean() {
 		System.out.println("----------------SampleFactoryBean constructor----------------");
@@ -31,7 +35,25 @@ public class SampleFactoryBean implements FactoryBean<SampleFactoryBean.Bean> {
 		return true;
 	}
 
-	public static final class Bean {
+	@Override
+	public void start() {
+		System.out.println("Lifecycle.start === > " + this.toString());
+	}
+
+	@Override
+	public void stop() {
+		System.out.println("Lifecycle.stop === > " + this.toString());
+	}
+
+	@Override
+	public boolean isRunning() {
+		return false;
+	}
+
+	/*
+	 * 这里实现的SmartLifecycle没有效果，真正有效果的是SampleFactoryBean实现的SmartLifecycle
+	 */
+	public static final class Bean implements SmartLifecycle {
 		private String info = "default info SampleFactoryBean.Bean";
 
 		public Bean() {
@@ -44,6 +66,21 @@ public class SampleFactoryBean implements FactoryBean<SampleFactoryBean.Bean> {
 
 		public void setInfo(String info) {
 			this.info = info;
+		}
+
+		@Override
+		public void start() {
+			System.out.println("Lifecycle.start === > " + this.toString());
+		}
+
+		@Override
+		public void stop() {
+			System.out.println("Lifecycle.stop === > " + this.toString());
+		}
+
+		@Override
+		public boolean isRunning() {
+			return false;
 		}
 	}
 }

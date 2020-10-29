@@ -585,7 +585,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				// Instantiate all remaining (non-lazy-init) singletons.
 				finishBeanFactoryInitialization(beanFactory);
 
-				// 完成刷新过程，同志生命周期处理器LifecycleProcessor，并广播ContextRefreshedEvent事件
+				// 完成刷新过程，通知生命周期处理器LifecycleProcessor，并广播ContextRefreshedEvent事件
 				// Last step: publish corresponding event.
 				finishRefresh();
 			}
@@ -933,6 +933,9 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 */
 	protected void initLifecycleProcessor() {
 		ConfigurableListableBeanFactory beanFactory = getBeanFactory();
+		/*
+		 * 如果已存在，则直接从beanFactory获取
+		 */
 		if (beanFactory.containsLocalBean(LIFECYCLE_PROCESSOR_BEAN_NAME)) {
 			this.lifecycleProcessor =
 					beanFactory.getBean(LIFECYCLE_PROCESSOR_BEAN_NAME, LifecycleProcessor.class);
@@ -940,6 +943,9 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				logger.trace("Using LifecycleProcessor [" + this.lifecycleProcessor + "]");
 			}
 		}
+		/*
+		 * new DefaultLifecycleProcessor，并注册为bean
+		 */
 		else {
 			DefaultLifecycleProcessor defaultProcessor = new DefaultLifecycleProcessor();
 			defaultProcessor.setBeanFactory(beanFactory);
@@ -1045,12 +1051,18 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * {@link org.springframework.context.event.ContextRefreshedEvent}.
 	 */
 	protected void finishRefresh() {
+		// 清理缓存
 		// Clear context-level resource caches (such as ASM metadata from scanning).
 		clearResourceCaches();
 
+		// 初始化生命周期处理器（this.lifecycleProcessor） ： 从bean中获取，或者新创建并注册为bean
+		// 默认DefaultLifecycleProcessor
 		// Initialize lifecycle processor for this context.
 		initLifecycleProcessor();
 
+		// 启动所有实现了Lifecycle接口的bean（即调用start方法）
+		// 实际上，由于设置了参数autoStartupOnly = true，所以这里只会启动实现了SmartLifecycle接口的bean。
+		// 可以理解为，这里只启动那些标明了自动启动的bean
 		// Propagate refresh to lifecycle processor first.
 		getLifecycleProcessor().onRefresh();
 

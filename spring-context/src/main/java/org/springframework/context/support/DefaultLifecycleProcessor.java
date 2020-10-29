@@ -140,7 +140,14 @@ public class DefaultLifecycleProcessor implements LifecycleProcessor, BeanFactor
 	private void startBeans(boolean autoStartupOnly) {
 		Map<String, Lifecycle> lifecycleBeans = getLifecycleBeans();
 		Map<Integer, LifecycleGroup> phases = new HashMap<>();
+
+		/*
+		 * 按照phase分组，将相同phase的bean放到一个LifecycleGroup里
+		 * 其中：phase = SmartLifecycle.getPhase() 或 phase = 0
+		 */
 		lifecycleBeans.forEach((beanName, bean) -> {
+			// AbstractApplicationContext.refresh中启动时，autoStartupOnly = true，
+			// 所以这里只会启动实现了SmartLifecycle，且SmartLifecycle.isAutoStartup = true的bean
 			if (!autoStartupOnly || (bean instanceof SmartLifecycle && ((SmartLifecycle) bean).isAutoStartup())) {
 				int phase = getPhase(bean);
 				LifecycleGroup group = phases.get(phase);
@@ -151,6 +158,10 @@ public class DefaultLifecycleProcessor implements LifecycleProcessor, BeanFactor
 				group.add(beanName, bean);
 			}
 		});
+
+		/*
+		 * phase按从小到达排序，分组执行
+		 */
 		if (!phases.isEmpty()) {
 			List<Integer> keys = new ArrayList<>(phases.keySet());
 			Collections.sort(keys);
@@ -169,10 +180,22 @@ public class DefaultLifecycleProcessor implements LifecycleProcessor, BeanFactor
 	private void doStart(Map<String, ? extends Lifecycle> lifecycleBeans, String beanName, boolean autoStartupOnly) {
 		Lifecycle bean = lifecycleBeans.remove(beanName);
 		if (bean != null && bean != this) {
+			/*
+			 * 先启动依赖bean（如果依赖bean也实现了Lifecycle接口的话）
+			 */
 			String[] dependenciesForBean = getBeanFactory().getDependenciesForBean(beanName);
 			for (String dependency : dependenciesForBean) {
 				doStart(lifecycleBeans, dependency, autoStartupOnly);
 			}
+
+			/*
+			 * 启动条件
+			 * 1、bean未启动
+			 * 2、没有设置'仅自启动'
+			 * 		or 没有实现SmartLifecycle（分析上下文，实际上这种情况不会出现）
+			 * 			or 实现了SmartLifecycle&&SmartLifecycle.isAutoStartup() == true
+			 *
+			 */
 			if (!bean.isRunning() &&
 					(!autoStartupOnly || !(bean instanceof SmartLifecycle) || ((SmartLifecycle) bean).isAutoStartup())) {
 				if (logger.isTraceEnabled()) {
@@ -282,7 +305,15 @@ public class DefaultLifecycleProcessor implements LifecycleProcessor, BeanFactor
 		for (String beanName : beanNames) {
 			String beanNameToRegister = BeanFactoryUtils.transformedBeanName(beanName);
 			boolean isFactoryBean = beanFactory.isFactoryBean(beanNameToRegister);
+
+			/*
+			 * 如果是使用FactoryBean定义的，则Lifecycle接口必须加在Factory上，否则不生效（见matchesBeanType）
+			 */
+
+			// beanNameToCheck，如果时factory bean则添加$前缀
 			String beanNameToCheck = (isFactoryBean ? BeanFactory.FACTORY_BEAN_PREFIX + beanName : beanName);
+
+			// 单例，且bean定义类型必须实现Lifecycle（特别注意，FactoryBean匹配的时factory，而非getObject
 			if ((beanFactory.containsSingleton(beanNameToRegister) &&
 					(!isFactoryBean || matchesBeanType(Lifecycle.class, beanNameToCheck, beanFactory))) ||
 					matchesBeanType(SmartLifecycle.class, beanNameToCheck, beanFactory)) {
@@ -328,10 +359,20 @@ public class DefaultLifecycleProcessor implements LifecycleProcessor, BeanFactor
 
 		private final boolean autoStartupOnly;
 
+		/**
+		 * 本组要执行的bean
+		 */
 		private final List<LifecycleGroupMember> members = new ArrayList<>();
 
 		private int smartMemberCount;
 
+		/**
+		 *
+		 * @param phase 当前租的phase
+		 * @param timeout 执行超时实际，默认30000
+		 * @param lifecycleBeans 所有实现了Lifecycle接口的bean
+		 * @param autoStartupOnly 是否仅启动标明自启动的bean，即实现了SmartLifecycle接口，且isAutoStartup=true的
+		 */
 		public LifecycleGroup(
 				int phase, long timeout, Map<String, ? extends Lifecycle> lifecycleBeans, boolean autoStartupOnly) {
 
