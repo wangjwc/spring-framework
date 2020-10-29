@@ -1,4 +1,4 @@
-package org.springframework.learn.xml.factory;
+package org.springframework.learn.beans.factorybean;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;

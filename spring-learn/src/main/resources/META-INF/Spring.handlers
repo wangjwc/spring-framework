@@ -1,1 +1,1 @@
-http\://www.my.com/schema/custom=org.springframework.learn.xml.custom.MyCustomNamespaceHandler
+http\://www.my.com/schema/custom=org.springframework.learn.xml.customxml.MyCustomNamespaceHandler
