@@ -1,4 +1,4 @@
-package org.springframework.learn.xml;
+package org.springframework.learn.main.xml;
 
 import org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;

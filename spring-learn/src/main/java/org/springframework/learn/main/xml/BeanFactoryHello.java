@@ -1,4 +1,4 @@
-package org.springframework.learn.xml;
+package org.springframework.learn.main.xml;
 
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.beans.factory.xml.XmlBeanDefinitionReader;
