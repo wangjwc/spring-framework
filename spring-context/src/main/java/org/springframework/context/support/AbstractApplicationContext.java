@@ -572,7 +572,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				// Initialize other special beans in specific context subclasses.
 				onRefresh();
 
-				// 在所有注册的bean中，查找实现了ApplicationListener的备案，并注册到广播器
+				// 在所有注册的bean中，查找实现了ApplicationListener的bean，并注册到广播器
 				// Check for listener beans and register them.
 				registerListeners();
 
