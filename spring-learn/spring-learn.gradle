@@ -8,6 +8,8 @@ dependencies {
     compile(project(":spring-beans"))
     compile(project(":spring-core"))
     compile(project(":spring-context"))
+    compile(project(":spring-aop"))
+    compile("org.aspectj:aspectjrt")
     testCompile group: 'junit', name: 'junit', version: '4.12'
     optional("org.codehaus.groovy:groovy-xml")
 }
