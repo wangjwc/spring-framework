@@ -5,7 +5,10 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.lang.Nullable;
 import org.springframework.learn.beans.SampleBean;
+import org.springframework.learn.beans.ValuePlaceHolderBean;
 import org.springframework.learn.beans.factorybean.SampleFactoryBean;
+import org.springframework.learn.beans.generic.GenericDependTestA;
+import org.springframework.learn.beans.generic.GenericDependTestB;
 import org.springframework.learn.beans.propertyeditor.PropertyEditorTestBean;
 
 /**
@@ -81,6 +84,32 @@ public class ApplicationContextHello {
 
 			SampleBean sampleBean2 = (SampleBean)context.getBean("sampleBean2");
 			System.out.println(sampleBean2.getTestStr());
+
+			ValuePlaceHolderBean valuePlaceHolderBean = (ValuePlaceHolderBean) context.getBean("valuePlaceHolderBean");
+			System.out.println("valuePlaceHolderBean.value ==> " + valuePlaceHolderBean.getValue());
+			System.out.println("valuePlaceHolderBean.value2 ==> " + valuePlaceHolderBean.getValue2());
 		}
 	}
+
+	/*
+	 * 泛型依赖
+	 */
+	public static final class GenericDependTest {
+		public static void main(String[] args){
+			System.getProperties().put("spring.profiles.active", "generic");
+			String[] path = new String[]{"/spring/hello-application-context.xml"};
+			ApplicationContext context = new ClassPathXmlApplicationContext(path, true, null);
+
+			GenericDependTestA testA = context.getBean(GenericDependTestA.class);
+			GenericDependTestB testB = context.getBean(GenericDependTestB.class);
+
+			System.out.println("A.info => " + testA.getInfo());
+			System.out.println("A.genericField ==> " + testA.getGenericField().toString());
+			System.out.println("A.genericField.info ==> " + testA.getGenericField().getInfo());
+
+			System.out.println("B ==> " + testB.toString());
+			System.out.println("B.info ==> " + testB.getInfo());
+		}
+	}
+	//
 }

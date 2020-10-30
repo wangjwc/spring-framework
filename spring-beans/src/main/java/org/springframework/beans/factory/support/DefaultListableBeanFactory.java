@@ -759,6 +759,13 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		}
 	}
 
+	/**
+	 * bean是否可以作为自动装配时descriptor的候选依赖
+	 * @param beanName the name of the bean to check
+	 * @param descriptor 依赖描述
+	 * @return
+	 * @throws NoSuchBeanDefinitionException
+	 */
 	@Override
 	public boolean isAutowireCandidate(String beanName, DependencyDescriptor descriptor)
 			throws NoSuchBeanDefinitionException {
@@ -786,6 +793,9 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			return isAutowireCandidate(beanName, new RootBeanDefinition(getType(beanName)), descriptor, resolver);
 		}
 
+		/*
+		 * 如果bean未发现，则从parent中查找
+		 */
 		BeanFactory parent = getParentBeanFactory();
 		if (parent instanceof DefaultListableBeanFactory) {
 			// No bean definition found in this factory -> delegate to parent.

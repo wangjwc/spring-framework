@@ -31,6 +31,8 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.ClassUtils;
 
 /**
+ * 处理泛型依赖解析
+ *
  * Basic {@link AutowireCandidateResolver} that performs a full generic type
  * match with the candidate's type if the dependency is declared as a generic type
  * (e.g. Repository&lt;Customer&gt;).
@@ -63,13 +65,18 @@ public class GenericTypeAwareAutowireCandidateResolver extends SimpleAutowireCan
 	@Override
 	public boolean isAutowireCandidate(BeanDefinitionHolder bdHolder, DependencyDescriptor descriptor) {
 		if (!super.isAutowireCandidate(bdHolder, descriptor)) {
+			// call bdHolder.getBeanDefinition().isAutowireCandidate();
+			// 即bean定义中明确指定了该bean不能被自动注入
 			// If explicitly false, do not proceed with any other checks...
 			return false;
 		}
+
+		// 泛型匹配
 		return checkGenericTypeMatch(bdHolder, descriptor);
 	}
 
 	/**
+	 * 匹配给定的依赖类型descriptor的泛型信息和给定的候选bean定义
 	 * Match the given dependency type with its generic type information against the given
 	 * candidate bean definition.
 	 */
@@ -80,6 +87,7 @@ public class GenericTypeAwareAutowireCandidateResolver extends SimpleAutowireCan
 			return true;
 		}
 
+		// bean类型
 		ResolvableType targetType = null;
 		boolean cacheType = false;
 		RootBeanDefinition rbd = null;
@@ -90,6 +98,7 @@ public class GenericTypeAwareAutowireCandidateResolver extends SimpleAutowireCan
 			targetType = rbd.targetType;
 			if (targetType == null) {
 				cacheType = true;
+
 				// First, check factory method return type, if applicable
 				targetType = getReturnTypeForFactoryMethod(rbd, descriptor);
 				if (targetType == null) {

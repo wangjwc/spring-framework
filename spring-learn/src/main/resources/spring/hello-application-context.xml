@@ -1,8 +1,7 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
 	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	   xsi:schemaLocation="
-		http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
-		">
+	   xmlns:context="http://www.springframework.org/schema/context"
+	   xsi:schemaLocation="http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd">
 	<beans profile="sample">
 		<bean id="sampleBean" class="org.springframework.learn.beans.SampleBean">
 			<property name="testStr" value="from xml property element"/>
@@ -45,17 +44,29 @@
 		<!-- 最终功能由BeanFactoryPostProcessor接口实现
 		     org.springframework.context.support.PropertySourcesPlaceholderConfigurer#postProcessBeanFactory
 		 -->
-		<bean id="propertySourcesPlaceholderConfigurer" class="org.springframework.context.support.PropertySourcesPlaceholderConfigurer">
+		<!--<bean id="propertySourcesPlaceholderConfigurer" class="org.springframework.context.support.PropertySourcesPlaceholderConfigurer">
 			<property name="locations">
 				<list>
 					<value>test.properties</value>
 				</list>
 			</property>
+		</bean>-->
+
+		<!--- context注解，参照org.springframework.context.config.ContextNamespaceHandler -->
+		<context:property-placeholder location="classpath:test.properties"/>
+		<context:annotation-config/>
+
+		<!-- 完全自定义实现placeHolder效果，支持GET_xxx-->
+		<bean class="org.springframework.learn.beans.beanfactorypostprocessors.MyBeanFactoryPostProcessor">
+			<property name="locations">
+				<list>
+					<value>classpath:test.properties</value>
+				</list>
+			</property>
 		</bean>
 
-		<bean class="org.springframework.learn.beans.beanfactorypostprocessors.MyBeanFactoryPostProcessor">
-			<property name="configurer" ref="propertySourcesPlaceholderConfigurer"/>
-		</bean>
+
+		<bean id="valuePlaceHolderBean" class="org.springframework.learn.beans.ValuePlaceHolderBean"/>
 
 		<bean id="sampleBean" class="org.springframework.learn.beans.SampleBean">
 			<property name="testStr" value="${sample.testStr}"/>
@@ -63,6 +74,17 @@
 
 		<bean id="sampleBean2" class="org.springframework.learn.beans.SampleBean">
 			<property name="testStr" value="GET_sample.testStr"/>
+		</bean>
+	</beans>
+
+	<beans profile="generic">
+		<context:annotation-config/>
+
+		<bean id="genericDependTestA" class="org.springframework.learn.beans.generic.GenericDependTestA" autowire="byType">
+			<property name="info" value="generic profile"/>
+		</bean>
+		<bean id="genericDependTestB" class="org.springframework.learn.beans.generic.GenericDependTestB">
+			<property name="info" value="generic profile"/>
 		</bean>
 	</beans>
 </beans>

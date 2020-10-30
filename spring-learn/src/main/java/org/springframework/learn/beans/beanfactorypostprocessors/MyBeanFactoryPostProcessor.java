@@ -1,13 +1,13 @@
 package org.springframework.learn.beans.beanfactorypostprocessors;
 
 import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.beans.factory.config.BeanDefinitionVisitor;
-import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
-import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.config.*;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.core.env.PropertySource;
 import org.springframework.core.env.PropertySources;
+import org.springframework.core.io.Resource;
+import org.springframework.lang.Nullable;
 import org.springframework.util.StringValueResolver;
 
 import java.util.Iterator;
@@ -19,7 +19,14 @@ import java.util.Iterator;
  */
 public class MyBeanFactoryPostProcessor implements BeanFactoryPostProcessor {
 	// 依赖内置placeHolder
-	private PropertySourcesPlaceholderConfigurer configurer;
+	private PropertySourcesPlaceholderConfigurer configurer = new PropertySourcesPlaceholderConfigurer();
+
+	private Resource[] locations;
+
+	public void setLocations(Resource... locations) {
+		this.locations = locations;
+		configurer.setLocations(locations);
+	}
 
 	private StringValueResolver valueResolver = new StringValueResolver() {
 		@Override
@@ -51,6 +58,8 @@ public class MyBeanFactoryPostProcessor implements BeanFactoryPostProcessor {
 
 	@Override
 	public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
+		configurer.postProcessBeanFactory(beanFactory);
+
 		// 获取所有bean，遍历处理
 		String[] beanNames = beanFactory.getBeanDefinitionNames();
 		for (String beanName : beanNames) {
@@ -64,7 +73,4 @@ public class MyBeanFactoryPostProcessor implements BeanFactoryPostProcessor {
 		visitor.visitBeanDefinition(bd);
 	}
 
-	public void setConfigurer(PropertySourcesPlaceholderConfigurer configurer) {
-		this.configurer = configurer;
-	}
 }
