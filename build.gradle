@@ -288,6 +288,11 @@ configure(allprojects) { project ->
 			cacheDynamicVersionsFor 0, "seconds"
 		}
 	}
+	allprojects {
+		repositories {
+			maven{ url 'http://maven.aliyun.com/nexus/content/groups/public/'}
+		}
+	}
 }
 
 configure([rootProject] + javaProjects) { project ->
