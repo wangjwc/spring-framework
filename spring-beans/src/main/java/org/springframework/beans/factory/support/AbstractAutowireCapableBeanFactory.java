@@ -603,8 +603,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			}
 
 			// 将ObjectFactory加入三级缓存（singletonFactories）
-			// getEarlyBeanReference：应用SmartInstantiationAwareBeanPostProcessor，
-			// aop便是在这里织入的
+			// getEarlyBeanReference：应用SmartInstantiationAwareBeanPostProcessor，处理器实现类AbstractAutoProxyCreator.getEarlyBeanReference用于织入aop
 			addSingletonFactory(beanName, () -> getEarlyBeanReference(beanName, mbd, bean));
 		}
 
@@ -616,7 +615,8 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			 */
 			populateBean(beanName, mbd, instanceWrapper);
 
-			// 调用初始化方法，如init-method
+			// 1、调用初始化方法，如init-method、afterPropertiesSet
+			// 2、应用org.springframework.beans.factory.config.BeanPostProcessor.postProcessAfterInitialization（aop等）
 			exposedObject = initializeBean(beanName, exposedObject, mbd);
 		}
 		catch (Throwable ex) {
@@ -634,7 +634,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		 */
 		if (earlySingletonExposure) {
 			/*
-			 * 从缓存中查找，只有当前创建的bean在依赖注入时存在循环依赖这里才不为空，因为此时刚创建的bean还为放入缓存
+			 * 从缓存中查找，只有当前创建的bean在依赖注入时存在循环依赖这里才不为空，因为此时刚创建的bean还只存在与三级缓存
 			 */
 			Object earlySingletonReference = getSingleton(beanName, false);
 			if (earlySingletonReference != null) {
@@ -995,6 +995,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			for (BeanPostProcessor bp : getBeanPostProcessors()) {
 				if (bp instanceof SmartInstantiationAwareBeanPostProcessor) {
 					SmartInstantiationAwareBeanPostProcessor ibp = (SmartInstantiationAwareBeanPostProcessor) bp;
+					// 重要应用场景：提前曝光阶段织入aop：AbstractAutoProxyCreator.getEarlyBeanReference
 					exposedObject = ibp.getEarlyBeanReference(exposedObject, beanName);
 				}
 			}
@@ -1147,7 +1148,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 					// 实例化前post处理器
 					bean = applyBeanPostProcessorsBeforeInstantiation(targetType, beanName);
 					if (bean != null) {
-						// 实例化后置处理器（因为有了自定义实例，则不会走政策创建流出，所以在这里调用）
+						// 实例化后置处理器（因为有了自定义实例，则不会走正常创建流程，所以在这里调用）
 						bean = applyBeanPostProcessorsAfterInitialization(bean, beanName);
 					}
 				}
@@ -1897,6 +1898,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		}
 		if (mbd == null || !mbd.isSynthetic()) {
 			// 用户自定义的bean，执行BeanPostProcessors.postProcessAfterInitialization
+			// * 在这一步也会织入aop代理
 			wrappedBean = applyBeanPostProcessorsAfterInitialization(wrappedBean, beanName);
 		}
 

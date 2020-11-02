@@ -117,6 +117,10 @@ public abstract class AutoProxyUtils {
 	}
 
 	/**
+	 * beanName == 类名（全路径）+ AutowireCapableBeanFactory.ORIGINAL_INSTANCE_SUFFIX则返回true
+	 * 比如：
+	 * 	org.springframework.learn.aop.AopTestBean.ORIGINAL
+	 *
 	 * Determine whether the given bean name indicates an "original instance"
 	 * according to {@link AutowireCapableBeanFactory#ORIGINAL_INSTANCE_SUFFIX},
 	 * skipping any proxy attempts for it.

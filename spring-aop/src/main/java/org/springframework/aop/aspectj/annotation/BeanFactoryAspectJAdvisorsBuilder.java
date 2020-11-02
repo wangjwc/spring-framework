@@ -42,6 +42,7 @@ public class BeanFactoryAspectJAdvisorsBuilder {
 
 	private final ListableBeanFactory beanFactory;
 
+	// ReflectiveAspectJAdvisorFactory
 	private final AspectJAdvisorFactory advisorFactory;
 
 	@Nullable
@@ -83,15 +84,21 @@ public class BeanFactoryAspectJAdvisorsBuilder {
 	public List<Advisor> buildAspectJAdvisors() {
 		List<String> aspectNames = this.aspectBeanNames;
 
+		// double check 保证所有aspect只解析一次
 		if (aspectNames == null) {
 			synchronized (this) {
 				aspectNames = this.aspectBeanNames;
 				if (aspectNames == null) {
 					List<Advisor> advisors = new ArrayList<>();
 					aspectNames = new ArrayList<>();
+
+					// 获取所有的beanName（包含parent factory中的）
 					String[] beanNames = BeanFactoryUtils.beanNamesForTypeIncludingAncestors(
 							this.beanFactory, Object.class, true, false);
 					for (String beanName : beanNames) {
+
+						// 跳过不合格的bean
+						// @see AnnotationAwareAspectJAutoProxyCreator.BeanFactoryAspectJAdvisorsBuilderAdapter.isEligibleBean
 						if (!isEligibleBean(beanName)) {
 							continue;
 						}
@@ -101,14 +108,19 @@ public class BeanFactoryAspectJAdvisorsBuilder {
 						if (beanType == null) {
 							continue;
 						}
+
+						// 有@Aspect注解，且不是ajc编译的（即使用AspectJ语言编写），则为候选advisor
 						if (this.advisorFactory.isAspect(beanType)) {
 							aspectNames.add(beanName);
 							AspectMetadata amd = new AspectMetadata(beanType, beanName);
+							// 可在@Aspect注解中定义，默认SINGLETON(细节参照AspectJ文档，一般不需要设置)
 							if (amd.getAjType().getPerClause().getKind() == PerClauseKind.SINGLETON) {
 								MetadataAwareAspectInstanceFactory factory =
 										new BeanFactoryAspectInstanceFactory(this.beanFactory, beanName);
+								// 增强器提取：即解析@Aspect注解类中所有的增强方法
 								List<Advisor> classAdvisors = this.advisorFactory.getAdvisors(factory);
 								if (this.beanFactory.isSingleton(beanName)) {
+									// 加入缓存，下次直接从缓存获取
 									this.advisorsCache.put(beanName, classAdvisors);
 								}
 								else {

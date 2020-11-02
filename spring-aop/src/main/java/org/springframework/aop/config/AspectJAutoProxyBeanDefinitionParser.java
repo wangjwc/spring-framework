@@ -41,7 +41,10 @@ class AspectJAutoProxyBeanDefinitionParser implements BeanDefinitionParser {
 	@Override
 	@Nullable
 	public BeanDefinition parse(Element element, ParserContext parserContext) {
+		// 最终注册AnnotationAwareAspectJAutoProxyCreator
 		AopNamespaceUtils.registerAspectJAnnotationAutoProxyCreatorIfNecessary(parserContext, element);
+		// 对于配置中的子元素的处理(<aop:include name="aop.*" />)
+		//（填充AnnotationAwareAspectJAutoProxyCreator.includePatterns),
 		extendBeanDefinition(element, parserContext);
 		return null;
 	}
@@ -54,6 +57,12 @@ class AspectJAutoProxyBeanDefinitionParser implements BeanDefinitionParser {
 		}
 	}
 
+	/**
+	 * 将<aop:include name="aop.*" />定义的正则表达式加入到AnnotationAwareAspectJAutoProxyCreator属性注入中
+	 * @param element
+	 * @param parserContext
+	 * @param beanDef
+	 */
 	private void addIncludePatterns(Element element, ParserContext parserContext, BeanDefinition beanDef) {
 		ManagedList<TypedStringValue> includePatterns = new ManagedList<>();
 		NodeList childNodes = element.getChildNodes();
@@ -68,6 +77,7 @@ class AspectJAutoProxyBeanDefinitionParser implements BeanDefinitionParser {
 		}
 		if (!includePatterns.isEmpty()) {
 			includePatterns.setSource(parserContext.extractSource(element));
+			// 注册依赖（set时会转为正则Pattern实例）
 			beanDef.getPropertyValues().add("includePatterns", includePatterns);
 		}
 	}

@@ -33,13 +33,31 @@ public class ProxyConfig implements Serializable {
 	/** use serialVersionUID from Spring 1.2 for interoperability. */
 	private static final long serialVersionUID = -8409359707199703185L;
 
-
+	/**
+	 * 强制使用cglib代理
+	 */
 	private boolean proxyTargetClass = false;
 
 	private boolean optimize = false;
 
 	boolean opaque = false;
 
+	/**
+	 * 增强内部方法调用
+	 * for example：
+	 * 	public class Example {
+	 * 		@Transactional
+	 * 	    public a() {
+	 * 	    	this.b()
+	 * 	    }
+	 *
+	 *		@Transactional
+	 * 	    public b() {
+	 *
+	 * 	    }
+	 * 	}
+	 * 	this.b()无法应用aop，设置exposeProxy=true，将代码修改为((Example)AopContext.currentProxy()).b()，即可使用aop
+	 */
 	boolean exposeProxy = false;
 
 	private boolean frozen = false;

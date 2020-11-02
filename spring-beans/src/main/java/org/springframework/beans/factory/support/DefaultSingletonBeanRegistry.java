@@ -136,11 +136,11 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 */
 	protected void addSingleton(String beanName, Object singletonObject) {
 		synchronized (this.singletonObjects) {
-			// 存放单例
+			// 缓存单例：一级缓存
 			this.singletonObjects.put(beanName, singletonObject);
-			// 删除二级（earlySingletonObjects）、三级（singletonFactories）缓存
-			// ps（二级缓存是从三级缓存ObjectFactory创建的，三级缓存是在createBean时加入的
+			// 删除三级缓存（三级缓存是在createBean过程中提前暴露阶段加入的：DefaultSingletonBeanRegistry.addSingletonFactory）
 			this.singletonFactories.remove(beanName);
+			// 删除二级缓存（二级缓存来源于循环依赖时从三级缓存移入的，此时已经织入了aop）
 			this.earlySingletonObjects.remove(beanName);
 			// 已注册单例列表
 			this.registeredSingletons.add(beanName);
@@ -148,12 +148,13 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	}
 
 	/**
+	 * 将处于创建中的bean加入到三级缓存，用于循环依赖
 	 * Add the given singleton factory for building the specified singleton
 	 * if necessary.
 	 * <p>To be called for eager registration of singletons, e.g. to be able to
 	 * resolve circular references.
 	 * @param beanName the name of the bean
-	 * @param singletonFactory the factory for the singleton object
+	 * @param singletonFactory the factory for the singleton object（获取bean实例，织入aop）
 	 */
 	protected void addSingletonFactory(String beanName, ObjectFactory<?> singletonFactory) {
 		Assert.notNull(singletonFactory, "Singleton factory must not be null");

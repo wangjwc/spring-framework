@@ -85,6 +85,7 @@ public class AspectMetadata implements Serializable {
 		AjType<?> ajType = null;
 		while (currClass != Object.class) {
 			AjType<?> ajTypeToCheck = AjTypeSystem.getAjType(currClass);
+			// 判断class是否有Aspect注解
 			if (ajTypeToCheck.isAspect()) {
 				ajType = ajTypeToCheck;
 				break;
@@ -94,6 +95,8 @@ public class AspectMetadata implements Serializable {
 		if (ajType == null) {
 			throw new IllegalArgumentException("Class '" + aspectClass.getName() + "' is not an @AspectJ aspect");
 		}
+
+		// spring aop不支持优先级声明
 		if (ajType.getDeclarePrecedence().length > 0) {
 			throw new IllegalArgumentException("DeclarePrecedence not presently supported in Spring AOP");
 		}

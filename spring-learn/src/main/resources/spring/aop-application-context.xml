@@ -1,90 +1,28 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
 	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	   xmlns:context="http://www.springframework.org/schema/context"
-	   xsi:schemaLocation="http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd">
+	   xmlns:aop="http://www.springframework.org/schema/aop"
+	   xsi:schemaLocation="http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/aop https://www.springframework.org/schema/aop/spring-aop.xsd">
 	<beans profile="sample">
-		<bean id="sampleBean" class="org.springframework.learn.beans.SampleBean">
-			<property name="testStr" value="from xml property element"/>
+		<bean name="aopTestBean" class="org.springframework.learn.aop.AopTestBean">
+			<property name="info" value="from aop context: sample"/>
 		</bean>
 
-		<bean id="sampleFactoryBean" class="org.springframework.learn.beans.factorybean.SampleFactoryBean"/>
-	</beans>
-
-	<!-- 自定义-PropertyEditor -->
-	<beans profile="propertyEditor">
-		<!--
-		自定义-PropertyEditor，
-		实际上是执行了 @see org.springframework.beans.factory.config.BeanFactoryPostProcessor.postProcessBeanFactory
-		-->
-		<bean class="org.springframework.beans.factory.config.CustomEditorConfigurer">
-			<!-- 自定义Editor -->
-			<property name="customEditors">
-				<map>
-					<!-- 添加Date类型处理器，当遇到Date类型属性时，会调用自定义解析器解析，将结果注入 -->
-					<!-- ps这里可以直接使用字符串写类路径，因为在context初始化时已经将默认将对应的ClassEditor加入了 -->
-					<entry key="java.util.Date" value="org.springframework.learn.beans.propertyeditor.custom.PropertyEditorForDate"/>
-				</map>
-			</property>
-			<!-- 自定义Editor注册器，可以起到和customEditors同样的效果-->
-			<property name="propertyEditorRegistrars">
-				<list>
-					<!-- 使用注册器注册多个editor -->
-					<bean class="org.springframework.learn.beans.propertyeditor.MyPropertyEditorRegistrar"/>
-				</list>
-			</property>
-		</bean>
-		<bean id="propertyEditorTestBean" class="org.springframework.learn.beans.propertyeditor.PropertyEditorTestBean">
-			<property name="dateValue" value="2020-01-01"/>
-			<property name="bigDecimalValue" value="2020.0101"/>
-			<property name="stringArrayValue" value="s1,s2,s3"/>
-		</bean>
-	</beans>
-
-	<beans profile="beanFactoryPostProcessor">
-		<!-- 最终功能由BeanFactoryPostProcessor接口实现
-		     org.springframework.context.support.PropertySourcesPlaceholderConfigurer#postProcessBeanFactory
-		 -->
-		<!--<bean id="propertySourcesPlaceholderConfigurer" class="org.springframework.context.support.PropertySourcesPlaceholderConfigurer">
-			<property name="locations">
-				<list>
-					<value>test.properties</value>
-				</list>
-			</property>
-		</bean>-->
-
-		<!--- context注解，参照org.springframework.context.config.ContextNamespaceHandler -->
-		<context:property-placeholder location="classpath:test.properties"/>
-		<context:annotation-config/>
-
-		<!-- 完全自定义实现placeHolder效果，支持GET_xxx-->
-		<bean class="org.springframework.learn.beans.beanfactorypostprocessors.MyBeanFactoryPostProcessor">
-			<property name="locations">
-				<list>
-					<value>classpath:test.properties</value>
-				</list>
-			</property>
+		<bean name="org.springframework.learn.aop.AopTestBean.ORIGINAL" class="org.springframework.learn.aop.AopTestBean">
+			<property name="info" value="ORIGINAL"/>
 		</bean>
 
-
-		<bean id="valuePlaceHolderBean" class="org.springframework.learn.beans.ValuePlaceHolderBean"/>
-
-		<bean id="sampleBean" class="org.springframework.learn.beans.SampleBean">
-			<property name="testStr" value="${sample.testStr}"/>
+		<!-- org.springframework.aop.config.AopNamespaceHandler -->
+		<aop:aspectj-autoproxy>
+			<!--对@Aspect bean进行过滤，只有beanName满足至少一个正则表达式时，该@Aspect bean才生效 -->
+			<aop:include name="firstAspect.*" />
+			<!--<aop:include name="secondAspect.*" />-->
+		</aop:aspectj-autoproxy>
+		<bean id="firstAspectJTest" class="org.springframework.learn.aop.AspectJTest">
+			<property name="info" value="firstAspect"/>
 		</bean>
-
-		<bean id="sampleBean2" class="org.springframework.learn.beans.SampleBean">
-			<property name="testStr" value="GET_sample.testStr"/>
-		</bean>
-	</beans>
-
-	<beans profile="generic">
-		<context:annotation-config/>
-
-		<bean id="genericDependTestA" class="org.springframework.learn.beans.generic.GenericDependTestA" autowire="byType">
-			<property name="info" value="generic profile"/>
-		</bean>
-		<bean id="genericDependTestB" class="org.springframework.learn.beans.generic.GenericDependTestB">
-			<property name="info" value="generic profile"/>
+		<bean id="secondAspectJTest" class="org.springframework.learn.aop.AspectJTest">
+			<property name="info" value="secondAspectJTest"/>
 		</bean>
 	</beans>
 </beans>
