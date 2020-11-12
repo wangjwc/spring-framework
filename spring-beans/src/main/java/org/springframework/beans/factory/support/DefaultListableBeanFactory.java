@@ -1310,9 +1310,12 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			 * 用于支持@Value注解
 			 * 如果时@Value注解的，则到此为止，不再寻找其他依赖，优先级最高
 			 */
+
+			// 获取@Value注解中的表达式
 			Object value = getAutowireCandidateResolver().getSuggestedValue(descriptor);
 			if (value != null) {
 				if (value instanceof String) {
+					// 使用解析器解析出表达式的值（比如PlaceholderConfigurerSupport中注册的解析器）
 					String strVal = resolveEmbeddedValue((String) value);
 					BeanDefinition bd = (beanName != null && containsBean(beanName) ?
 							getMergedBeanDefinition(beanName) : null);

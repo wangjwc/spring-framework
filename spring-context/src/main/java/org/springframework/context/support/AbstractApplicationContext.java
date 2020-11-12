@@ -1014,6 +1014,11 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		/*
 		 * 如果没有ValueResolver（比如PropertyPlaceholderConfigurer），则注册一个默认的
 		 * （ps：PlaceholderConfigurerSupport中会调用addEmbeddedValueResolver注册解析器）
+		 * 作用：
+		 * 	1、支持@Value注解
+		 * 		org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency
+		 * 			Object value = getAutowireCandidateResolver().getSuggestedValue(descriptor); // 获取@Value注解中的字符串
+		 * 				org.springframework.beans.factory.support.AbstractBeanFactory.resolveEmbeddedValue // 使用@Value注解中的字符串解析出value
 		 */
 		// Register a default embedded value resolver if no bean post-processor
 		// (such as a PropertyPlaceholderConfigurer bean) registered any before:
