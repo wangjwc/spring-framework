@@ -174,7 +174,10 @@ public abstract class AnnotationConfigUtils {
 		}
 
 		/*
-		 * 支持构造方法解析
+		 * 1、支持构造方法解析
+		 * 		org.springframework.beans.factory.config.InstantiationAwareBeanPostProcessorAdapter.determineCandidateConstructors
+		 * 2、bean属性中的@Value注解解析（没有设置byName和byType时）
+		 * 		org.springframework.beans.factory.config.InstantiationAwareBeanPostProcessorAdapter.postProcessProperties
 		 */
 		if (!registry.containsBeanDefinition(AUTOWIRED_ANNOTATION_PROCESSOR_BEAN_NAME)) {
 			RootBeanDefinition def = new RootBeanDefinition(AutowiredAnnotationBeanPostProcessor.class);
