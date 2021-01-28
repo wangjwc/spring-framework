@@ -18,14 +18,15 @@
 			<property name="aopTestBeanA" ref="aopTestBeanA"/>
 		</bean>
 
-		<bean name="org.springframework.learn.aop.AopTestBean.ORIGINAL" class="org.springframework.learn.aop.AopTestBean">
+		<bean name="org.springframework.learn.aop.AopTestBean.ORIGINAL"
+			  class="org.springframework.learn.aop.AopTestBean">
 			<property name="info" value="ORIGINAL"/>
 		</bean>
 
 		<!-- org.springframework.aop.config.AopNamespaceHandler -->
 		<aop:aspectj-autoproxy>
 			<!--对@Aspect bean进行过滤，只有beanName满足至少一个正则表达式时，该@Aspect bean才生效 -->
-			<aop:include name="firstAspect.*" />
+			<aop:include name="firstAspect.*"/>
 			<!--<aop:include name="secondAspect.*" />-->
 		</aop:aspectj-autoproxy>
 		<bean id="firstAspectJTest" class="org.springframework.learn.aop.AspectJTest">
