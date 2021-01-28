@@ -134,6 +134,8 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	private boolean allowCircularReferences = true;
 
 	/**
+	 * 是否在循环引用的情况下允许注入一个原始bean实例，即使注入的bean有被包装的实例存在（如aop）
+	 * 比如存在某个Bean A在单例缓存中是被aop增强的实例，但注入到B中的确实未增强的实例）
 	 * Whether to resort to injecting a raw bean instance in case of circular reference,
 	 * even if the injected bean injecting got wrapped.
 	 */
@@ -615,8 +617,9 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			 */
 			populateBean(beanName, mbd, instanceWrapper);
 
-			// 1、调用初始化方法，如init-method、afterPropertiesSet
-			// 2、应用org.springframework.beans.factory.config.BeanPostProcessor.postProcessAfterInitialization（aop等）
+			// 1、处理aware接口
+			// 2、调用初始化方法，如init-method、afterPropertiesSet
+			// 3、应用org.springframework.beans.factory.config.BeanPostProcessor.postProcessAfterInitialization（aop等）
 			exposedObject = initializeBean(beanName, exposedObject, mbd);
 		}
 		catch (Throwable ex) {
@@ -635,21 +638,33 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		if (earlySingletonExposure) {
 			/*
 			 * 从缓存中查找，只有当前创建的bean在依赖注入时存在循环依赖这里才不为空，因为此时刚创建的bean还只存在与三级缓存
+			 * （循环依赖时会触发三级缓存向二级缓存转移，此过程可能执行aop增强）
 			 */
 			Object earlySingletonReference = getSingleton(beanName, false);
 			if (earlySingletonReference != null) {
-				// 如果bean没有改变，则无需检查
+				// 如果exposedObject == bean，则说明initializeBean中应用后置处理器postProcessAfterInitialization没有创建自定义的新实例
 				if (exposedObject == bean) {
+					// 使用缓存中的结果（因为这个实例可能被aop增强过了）
 					exposedObject = earlySingletonReference;
 				}
 				else if (!this.allowRawInjectionDespiteWrapping && hasDependentBean(beanName)) {
+					// 获取所有依赖当前bean的beanName列表
 					String[] dependentBeans = getDependentBeans(beanName);
 					Set<String> actualDependentBeans = new LinkedHashSet<>(dependentBeans.length);
 					for (String dependentBean : dependentBeans) {
+						/*
+						 * alreadyCreated中不存在时，删除单例缓存
+						 * 返回true时，说明dependentBean已经被创建或即将被创建
+						 */
 						if (!removeSingletonIfCreatedForTypeCheckOnly(dependentBean)) {
 							actualDependentBeans.add(dependentBean);
 						}
 					}
+
+					/*
+					 * actualDependentBeans不为空，说明有依赖当前bean的bean已经创建或即将创建，而由于后置处理器生成了新的bean，这便会导致
+					 * 存在两个实例，破坏了单例
+					 */
 					if (!actualDependentBeans.isEmpty()) {
 						throw new BeanCurrentlyInCreationException(beanName,
 								"Bean with name '" + beanName + "' has been injected into other beans [" +

@@ -44,6 +44,7 @@ public class BeanFactoryHello {
 		/*
 		 * 获取bean
 		 */
+		//registry.getBean(SampleBean.class);
 		SampleBean sampleBean = (SampleBean)registry.getBean("sampleBean");
 		System.out.println(sampleBean.getTestStr());
 

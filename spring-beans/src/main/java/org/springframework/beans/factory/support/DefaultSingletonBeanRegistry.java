@@ -512,6 +512,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	}
 
 	/**
+	 * 获取所有依赖beanName的bean列表
 	 * Return the names of all beans which depend on the specified bean, if any.
 	 * @param beanName the name of the bean
 	 * @return the array of dependent bean names, or an empty array if none

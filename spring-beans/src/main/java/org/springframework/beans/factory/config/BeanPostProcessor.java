@@ -79,6 +79,7 @@ public interface BeanPostProcessor {
 	 * 调用时机：
 	 * 1、bean初始化后调用（已经执行了init方法和InitializingBean）
 	 * 2、在InstantiationAwareBeanPostProcessor#postProcessBeforeInstantiation(java.lang.Class, java.lang.String)返回非空值后
+	 * 注意：如果返回null，列表中后续的processor将不会执行
 	 *
 	 * Apply this {@code BeanPostProcessor} to the given new bean instance <i>after</i> any bean
 	 * initialization callbacks (like InitializingBean's {@code afterPropertiesSet}

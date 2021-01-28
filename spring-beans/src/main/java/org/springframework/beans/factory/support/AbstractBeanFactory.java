@@ -169,7 +169,10 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	/** Map from bean name to merged RootBeanDefinition. */
 	private final Map<String, RootBeanDefinition> mergedBeanDefinitions = new ConcurrentHashMap<>(256);
 
-	/** Names of beans that have already been created at least once. */
+	/**
+	 * 缓存已经创建(或即将创建)的beanName
+	 * Names of beans that have already been created at least once.
+	 */
 	private final Set<String> alreadyCreated = Collections.newSetFromMap(new ConcurrentHashMap<>(256));
 
 	/** Names of beans that are currently in creation. */
@@ -1794,6 +1797,8 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	}
 
 	/**
+	 * 将指定的bean标记为已经创建(或即将创建)。
+	 * 这允许bean工厂为重复创建指定bean而优化其缓存。
 	 * Mark the specified bean as already created (or about to be created).
 	 * <p>This allows the bean factory to optimize its caching for repeated
 	 * creation of the specified bean.
@@ -1834,6 +1839,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	}
 
 	/**
+	 * alreadyCreated中不存在时，删除缓存
 	 * Remove the singleton instance (if any) for the given bean name,
 	 * but only if it hasn't been used for other purposes than type checking.
 	 * @param beanName the name of the bean
@@ -1930,7 +1936,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			//（DefaultListableBeanFactory实现中，即是检查beanDefinitionMap中是否存在beanName）
 			// Caches object obtained from FactoryBean if it is a singleton.
 			if (mbd == null && containsBeanDefinition(beanName)) {
-				// 将GenericBeanDefinition转话为RootDeanDefinition，如果是child bean，则同时
+				// 将GenericBeanDefinition转化为RootDeanDefinition，如果是child bean，则同时
 				// 会合并parent bean的相关属性
 				mbd = getMergedLocalBeanDefinition(beanName);
 			}
