@@ -8,6 +8,16 @@
 			<property name="info" value="from aop context: sample"/>
 		</bean>
 
+		<bean name="aopTestBeanA" class="org.springframework.learn.aop.AopTestBeanA">
+			<property name="info" value="from aop context: sample"/>
+			<property name="aopTestBeanB" ref="aopTestBeanB"/>
+		</bean>
+
+		<bean name="aopTestBeanB" class="org.springframework.learn.aop.AopTestBeanB">
+			<property name="info" value="from aop context: sample"/>
+			<property name="aopTestBeanA" ref="aopTestBeanA"/>
+		</bean>
+
 		<bean name="org.springframework.learn.aop.AopTestBean.ORIGINAL" class="org.springframework.learn.aop.AopTestBean">
 			<property name="info" value="ORIGINAL"/>
 		</bean>

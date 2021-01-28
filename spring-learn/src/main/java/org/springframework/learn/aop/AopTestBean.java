@@ -7,6 +7,10 @@ package org.springframework.learn.aop;
 public class AopTestBean {
 	private String info;
 
+	public AopTestBean() {
+		System.out.println("----------------AopTestBean constructor----------------");
+	}
+
 	public String hello() {
 		System.out.println("AopTestBean.hello running");
 		return "hello " + info;
