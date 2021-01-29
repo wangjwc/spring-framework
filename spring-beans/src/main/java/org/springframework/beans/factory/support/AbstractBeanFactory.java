@@ -1992,10 +1992,9 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	protected void registerDisposableBeanIfNecessary(String beanName, Object bean, RootBeanDefinition mbd) {
 		AccessControlContext acc = (System.getSecurityManager() != null ? getAccessControlContext() : null);
 		/*
+		 * 条件：
 		 * 1、非原型模式（单例或自定义）并且
-		 * 2、（
-		 * 	定义了destroy-method 或者注册了的DestructionAwareBeanPostProcessor中至少一个的requiresDestruction方法返回true
-		 * ）
+		 * 2、定义了destroy-method 或者注册了的DestructionAwareBeanPostProcessor中至少一个的requiresDestruction方法返回true
 		 */
 		if (!mbd.isPrototype() && requiresDestruction(bean, mbd)) {
 			if (mbd.isSingleton()) {
