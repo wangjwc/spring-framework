@@ -236,6 +236,8 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 
 	/**
 	 * 循环依赖时，给先实例化的bean织入代理
+	 *
+	 * ps：同一个bean只会织入一次，与postProcessAfterInitialization互斥
 	 * @param bean the raw bean instance
 	 * @param beanName the name of the bean
 	 * @return
@@ -303,6 +305,7 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	 * 调用时机：
 	 * 	 1、bean初始化后调用（已经执行了init方法和InitializingBean）
 	 * 	 2、在InstantiationAwareBeanPostProcessor#postProcessBeforeInstantiation(java.lang.Class, java.lang.String)返回非空值后
+	 * 	 ps：同一个bean只会织入一次，与getEarlyBeanReference互斥
 	 * Create a proxy with the configured interceptors if the bean is
 	 * identified as one to proxy by the subclass.
 	 * @see #getAdvicesAndAdvisorsForBean

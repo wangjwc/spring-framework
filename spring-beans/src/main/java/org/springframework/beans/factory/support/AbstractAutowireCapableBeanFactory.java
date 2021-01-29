@@ -619,7 +619,9 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
 			// 1、处理aware接口
 			// 2、调用初始化方法，如init-method、afterPropertiesSet
-			// 3、应用org.springframework.beans.factory.config.BeanPostProcessor.postProcessAfterInitialization（aop等）
+			// 3、应用org.springframework.beans.factory.config.BeanPostProcessor.postProcessAfterInitialization（织入aop等）
+			//
+			// 关于织入aop：因为如果有循环依赖，那么会在getEarlyBeanReference中织入，这里就不会织入了，非循环依赖的话，会在这里织入
 			exposedObject = initializeBean(beanName, exposedObject, mbd);
 		}
 		catch (Throwable ex) {
@@ -1913,7 +1915,8 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		}
 		if (mbd == null || !mbd.isSynthetic()) {
 			// 用户自定义的bean，执行BeanPostProcessors.postProcessAfterInitialization
-			// * 在这一步也会织入aop代理
+			//
+			// ps：在这一步也会织入aop代理 AbstractAutoProxyCreator#postProcessAfterInitialization
 			wrappedBean = applyBeanPostProcessorsAfterInitialization(wrappedBean, beanName);
 		}
 
