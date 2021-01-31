@@ -158,7 +158,7 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	private int autowireMode = AUTOWIRE_NO;
 
 	/**
-	 * 以来检查，spring 3.0后已经
+	 * 依赖检查，对应depends-on属性，3.0已废弃
 	 *
 	 * */
 	private int dependencyCheck = DEPENDENCY_CHECK_NONE;

@@ -1445,10 +1445,10 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			}
 		}
 
-		// 给InstantiationAwareBeanPostProcessors最后一次机会在属性填充前改变bean
+		// 给用户最后一次机会在属性填充前改变bean，比如修改注入字段的格式
 		// Give any InstantiationAwareBeanPostProcessors the opportunity to modify the
 		// state of the bean before properties are set. This can be used, for example,
-		// to support styles of field injection. todo 这个时指修改resolvedAutowireMode吗
+		// to support styles of field injection. todo 这个是指修改resolvedAutowireMode吗
 		if (!mbd.isSynthetic() && hasInstantiationAwareBeanPostProcessors()) {
 			for (BeanPostProcessor bp : getBeanPostProcessors()) {
 				if (bp instanceof InstantiationAwareBeanPostProcessor) {
@@ -1492,7 +1492,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 				if (bp instanceof InstantiationAwareBeanPostProcessor) {
 					InstantiationAwareBeanPostProcessor ibp = (InstantiationAwareBeanPostProcessor) bp;
 					/*
-					 * 使用实例化后处理器处理所有property, 这里提供了在属性注入前进行最后处理的机会，
+					 * 处理器处理所有property, 这里提供了在属性注入前进行最后处理的机会，
 					 * 如RequiredAnnotationBeanPostProcessor.postProcessPropertyValues中对@Required的检查（已经废弃）
 					 *
 					 * pd: AutowiredAnnotationBeanPostProcessor处理器在这会注入@Autowire注解指定的依赖
@@ -1500,8 +1500,11 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 					PropertyValues pvsToUse = ibp.postProcessProperties(pvs, bw.getWrappedInstance(), beanName);
 					if (pvsToUse == null) {
 						if (filteredPds == null) {
+							// 排除掉需要忽略依赖注入的类型属性
 							filteredPds = filterPropertyDescriptorsForDependencyCheck(bw, mbd.allowCaching);
 						}
+
+						// spring 5.1后废除，推荐使用postProcessProperties
 						pvsToUse = ibp.postProcessPropertyValues(pvs, filteredPds, bw.getWrappedInstance(), beanName);
 						if (pvsToUse == null) {
 							return;
@@ -1513,6 +1516,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		}
 		if (needsDepCheck) {
 			if (filteredPds == null) {
+				// 排除掉需要忽略依赖注入的类型属性
 				filteredPds = filterPropertyDescriptorsForDependencyCheck(bw, mbd.allowCaching);
 			}
 			// 依赖检查（对应depends-on属性，3.0已废弃）
@@ -1651,6 +1655,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	}
 
 	/**
+	 * 排除掉需要忽略依赖注入的类型属性
 	 * Extract a filtered set of PropertyDescriptors from the given BeanWrapper,
 	 * excluding ignored dependency types or properties defined on ignored dependency interfaces.
 	 * @param bw the BeanWrapper the bean was created with
@@ -1662,8 +1667,10 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	protected PropertyDescriptor[] filterPropertyDescriptorsForDependencyCheck(BeanWrapper bw, boolean cache) {
 		PropertyDescriptor[] filtered = this.filteredPropertyDescriptorsCache.get(bw.getWrappedClass());
 		if (filtered == null) {
+			// 过滤不需要在此处注入的属性，比如aware
 			filtered = filterPropertyDescriptorsForDependencyCheck(bw);
 			if (cache) {
+				// 缓存
 				PropertyDescriptor[] existing =
 						this.filteredPropertyDescriptorsCache.putIfAbsent(bw.getWrappedClass(), filtered);
 				if (existing != null) {
@@ -1700,7 +1707,10 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	protected boolean isExcludedFromDependencyCheck(PropertyDescriptor pd) {
 
 		/*
-		 * ignoredDependencyInterfaces， add in constructor
+		 * 1、排除cglib生成的属性
+		 * 2、排除指定类型的属性（无默认，用户自定义）
+		 * 3、排除指定接口类型的属性（默认一些内置的aware接口）
+		 *  ignoredDependencyInterfaces， add in constructor
 		 * 	ignoreDependencyInterface(BeanNameAware.class);
 		 * 	ignoreDependencyInterface(BeanFactoryAware.class);
 		 * 	ignoreDependencyInterface(BeanClassLoaderAware.class);

@@ -23,4 +23,8 @@ public class AopTestBean {
 	public void setInfo(String info) {
 		this.info = info;
 	}
+
+	public void whenDestroy() {
+		System.out.println("AopTestBean destroy, info=" + info);
+	}
 }

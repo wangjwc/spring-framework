@@ -68,9 +68,14 @@ class DisposableBeanAdapter implements DisposableBean, Runnable, Serializable {
 
 	private static final Log logger = LogFactory.getLog(DisposableBeanAdapter.class);
 
-
+	/**
+	 * bean实例（原始实例，未经过aop增强的）
+	 */
 	private final Object bean;
 
+	/**
+	 * bean名称
+	 */
 	private final String beanName;
 
 	private final boolean invokeDisposableBean;
@@ -80,12 +85,21 @@ class DisposableBeanAdapter implements DisposableBean, Runnable, Serializable {
 	@Nullable
 	private final AccessControlContext acc;
 
+	/**
+	 * 当前bean的destroy-method方法名
+	 */
 	@Nullable
 	private String destroyMethodName;
 
+	/**
+	 * 当前bean的destroy-method
+	 */
 	@Nullable
 	private transient Method destroyMethod;
 
+	/**
+	 * 匹配的当前bean的DestructionAwareBeanPostProcessor列表
+	 */
 	@Nullable
 	private List<DestructionAwareBeanPostProcessor> beanPostProcessors;
 
