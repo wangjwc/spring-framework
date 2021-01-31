@@ -153,6 +153,7 @@ public abstract class AnnotationUtils {
 	}
 
 	/**
+	 *
 	 * Determine whether the given class is a candidate for carrying the specified annotation
 	 * (at type, method or field level).
 	 * @param clazz the class to introspect

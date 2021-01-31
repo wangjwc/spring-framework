@@ -89,6 +89,7 @@ public class ContextAnnotationAutowireCandidateResolver extends QualifierAnnotat
 			}
 			@Override
 			public Object getTarget() {
+				// TODO 2021/1/31 下午8:02 缺少缓存，每次都调用代理依赖的方法都要重新查找bean
 				Object target = beanFactory.doResolveDependency(descriptor, beanName, null, null);
 				if (target == null) {
 					Class<?> type = getTargetClass();

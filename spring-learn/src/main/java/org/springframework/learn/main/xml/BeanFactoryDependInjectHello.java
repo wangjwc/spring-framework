@@ -3,11 +3,13 @@ package org.springframework.learn.main.xml;
 import org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.beans.factory.xml.XmlBeanDefinitionReader;
+import org.springframework.context.annotation.ContextAnnotationAutowireCandidateResolver;
 import org.springframework.core.env.EnvironmentCapable;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.lang.NonNull;
 import org.springframework.learn.beans.SampleA;
+import org.springframework.learn.beans.SampleB;
 
 import java.io.IOException;
 
@@ -82,7 +84,7 @@ public class BeanFactoryDependInjectHello {
 	}
 
 	/**
-	 * 按名称自动注入
+	 * 按类型自动注入
 	 */
 	public static class InjectAutowireByTypeBeanFactoryHello extends BeanFactoryDependInjectHello {
 		public static void main(String[] args) throws IOException {
@@ -93,9 +95,30 @@ public class BeanFactoryDependInjectHello {
 			SampleA sampleA = (SampleA)registry.getBean("sampleA");
 			System.out.println(sampleA.getInfo());
 			System.out.println("single===>" + sampleA.getSampleB().getInfo());
+			System.out.println("getOptionalSampleB=====>" + sampleA.getOptionalSampleB().isPresent());
+			System.out.println("getLazySampleB===>" + sampleA.getLazySampleB().getInfo());
 			System.out.println("array===>" + sampleA.getArr()[0].getInfo());
 			System.out.println("list===>" + sampleA.getList().get(0).getInfo());
 			System.out.println("map===>" + sampleA.getMap());
+		}
+	}
+
+	public static class LazYInjectAutowireByTypeBeanFactoryHello extends BeanFactoryDependInjectHello {
+		public static void main(String[] args) throws IOException {
+			/*
+			 * hello-depend.xml中的property profile
+			 */
+			MyEnvironmentCapableRegistry registry = load("autowireByType");
+			registry.setAutowireCandidateResolver(new ContextAnnotationAutowireCandidateResolver());
+
+			SampleA sampleA = (SampleA)registry.getBean("sampleA");
+			System.out.println(sampleA.getInfo());
+			// 断点看效果
+			// org.springframework.context.annotation.ContextAnnotationAutowireCandidateResolver.buildLazyResolutionProxy
+			// spring在这块代理没有优化，每次执行方法时都要重新执行beanFactory.doResolveDependency获取代理bean
+			SampleB sampleB = sampleA.getLazySampleB();
+			System.out.println("getLazySampleB===>" + sampleB.getInfo());
+			System.out.println("getLazySampleB===>" + sampleB.getInfo());
 		}
 	}
 
