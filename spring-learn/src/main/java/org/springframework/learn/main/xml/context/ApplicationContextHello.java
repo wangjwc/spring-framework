@@ -88,6 +88,7 @@ public class ApplicationContextHello {
 			ValuePlaceHolderBean valuePlaceHolderBean = (ValuePlaceHolderBean) context.getBean("valuePlaceHolderBean");
 			System.out.println("valuePlaceHolderBean.value ==> " + valuePlaceHolderBean.getValue());
 			System.out.println("valuePlaceHolderBean.value2 ==> " + valuePlaceHolderBean.getValue2());
+			System.out.println("valuePlaceHolderBean.expressionToBean ==> " + valuePlaceHolderBean.getExpressionToBean());
 		}
 	}
 

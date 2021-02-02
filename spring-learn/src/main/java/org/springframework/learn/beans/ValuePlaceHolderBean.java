@@ -13,11 +13,18 @@ public class ValuePlaceHolderBean {
 	@Value("GET_sample.testStr")
 	private String value2;
 
+	@Value("${sample.beanExpression}")
+	private Object expressionToBean;
+
 	public String getValue() {
 		return value;
 	}
 
 	public String getValue2() {
 		return value2;
+	}
+
+	public Object getExpressionToBean() {
+		return expressionToBean;
 	}
 }

@@ -956,6 +956,11 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			return null;
 		}
 		String result = value;
+		/*
+		 * embeddedValueResolvers:
+		 * 	PlaceholderResolvingStringValueResolver  PlaceholderConfigurerSupport中添加
+		 * 	AbstractEnvironment context中添加
+		 */
 		for (StringValueResolver resolver : this.embeddedValueResolvers) {
 			result = resolver.resolveStringValue(result);
 			if (result == null) {
@@ -1658,6 +1663,9 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				scope = getRegisteredScope(scopeName);
 			}
 		}
+		/*
+		 * context中添加 beanFactory.setBeanExpressionResolver(new StandardBeanExpressionResolver(beanFactory.getBeanClassLoader()));
+		 */
 		return this.beanExpressionResolver.evaluate(value, new BeanExpressionContext(this, scope));
 	}
 

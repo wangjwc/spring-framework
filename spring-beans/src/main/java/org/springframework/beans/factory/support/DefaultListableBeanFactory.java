@@ -492,6 +492,13 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		return getBeanNamesForType(type, true, true);
 	}
 
+	/**
+	 *
+	 * @param type 要查找的
+	 * @param includeNonSingletons 是否允许返回非单例bean（大部分时候是true）
+	 * @param allowEagerInit 是否要初始化标注为lazy-init的bean 以及 FactoryBean以便执行类型检查（大部分时候是true）
+	 * @return
+	 */
 	@Override
 	public String[] getBeanNamesForType(@Nullable Class<?> type, boolean includeNonSingletons, boolean allowEagerInit) {
 		/*
@@ -504,6 +511,10 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			 */
 			return doGetBeanNamesForType(ResolvableType.forRawClass(type), includeNonSingletons, allowEagerInit);
 		}
+
+		/*
+		 * 从缓存获取
+		 */
 		Map<Class<?>, String[]> cache =
 				(includeNonSingletons ? this.allBeanNamesByType : this.singletonBeanNamesByType);
 		String[] resolvedBeanNames = cache.get(type);
@@ -1300,6 +1311,9 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 		InjectionPoint previousInjectionPoint = ConstructorResolver.setCurrentInjectionPoint(descriptor);
 		try {
+			/*
+			 * 快捷解析（使用bean缓存）
+			 */
 			Object shortcut = descriptor.resolveShortcut(this);
 			if (shortcut != null) {
 				return shortcut;
@@ -1316,7 +1330,10 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			if (value != null) {
 				if (value instanceof String) {
 					// 使用解析器解析出表达式的值（比如PlaceholderConfigurerSupport中注册的解析器）
+					// ${key} ==> value
 					String strVal = resolveEmbeddedValue((String) value);
+
+					// 如果value是#{xxx}格式，则查找beanName=xxx的bean
 					BeanDefinition bd = (beanName != null && containsBean(beanName) ?
 							getMergedBeanDefinition(beanName) : null);
 					value = evaluateBeanDefinitionString(strVal, bd);
@@ -1363,7 +1380,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			Object instanceCandidate;
 
 			if (matchingBeans.size() > 1) {
-				// 如果找到多个匹配bean
+				// 如果找到多个匹配bean，则尝试确定唯一一个
 				autowiredBeanName = determineAutowireCandidate(matchingBeans, descriptor);
 				if (autowiredBeanName == null) {
 					if (isRequired(descriptor) || !indicatesMultipleBeans(type)) {
@@ -1388,7 +1405,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			}
 
 			if (autowiredBeanNames != null) {
-				autowiredBeanNames.add(autowiredBeanName);
+					autowiredBeanNames.add(autowiredBeanName);
 			}
 			if (instanceCandidate instanceof Class) {
 				// 解析候选（这里会调用org.springframework.beans.factory.BeanFactory.getBean(java.lang.String)获取依赖）
@@ -1418,7 +1435,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		Class<?> type = descriptor.getDependencyType();
 
 		if (descriptor instanceof StreamDependencyDescriptor) {
-			// todo	不清楚这是什么用法，先忽略
+			// 处理stream类型依赖，目前仅StaticListableBeanFactory中用到过，一版没有实际使用场景
 			Map<String, Object> matchingBeans = findAutowireCandidates(beanName, type, descriptor);
 			if (autowiredBeanNames != null) {
 				autowiredBeanNames.addAll(matchingBeans.keySet());
@@ -1577,7 +1594,22 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		Map<String, Object> result = new LinkedHashMap<>(candidateNames.length);
 		/*
 		 * 根据requiredType从resolvableDependencies过滤出候选，将过滤后的列表加入结果中
-		 * todo resolvableDependencies应该是在DefaultListableBeanFactory.registerResolvableDependency方法中填充的， 具体细节以后再看
+		 *
+		 * ResourceAdapterApplicationContext：
+		 * beanFactory.registerResolvableDependency(BeanFactory.class, beanFactory);
+		 * beanFactory.registerResolvableDependency(ResourceLoader.class, this);
+		 * beanFactory.registerResolvableDependency(ApplicationEventPublisher.class, this);
+		 * beanFactory.registerResolvableDependency(ApplicationContext.class, this);
+		 *
+		 * ResourceAdapterApplicationContext：
+		 * beanFactory.registerResolvableDependency(BootstrapContext.class, this.bootstrapContext);
+		 * beanFactory.registerResolvableDependency(WorkManager.class,(ObjectFactory<WorkManager>) this.bootstrapContext::getWorkManager);
+		 *
+		 * WebApplicationContextUtils：
+		 * beanFactory.registerResolvableDependency(ServletRequest.class, new RequestObjectFactory());
+		 * beanFactory.registerResolvableDependency(ServletResponse.class, new ResponseObjectFactory());
+		 * beanFactory.registerResolvableDependency(HttpSession.class, new SessionObjectFactory());
+		 * beanFactory.registerResolvableDependency(WebRequest.class, new WebRequestObjectFactory());
 		 */
 		for (Map.Entry<Class<?>, Object> classObjectEntry : this.resolvableDependencies.entrySet()) {
 			Class<?> autowiringType = classObjectEntry.getKey();
@@ -1593,6 +1625,10 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 				}
 			}
 		}
+
+		/*
+		 * 便利从BeanFactory中获取的bean列表
+		 */
 		for (String candidate : candidateNames) {
 			// 不是自身引用 && bean可以作为候选（默认true，对应xml的autowire-candidate）
 			if (!isSelfReference(beanName, candidate) && isAutowireCandidate(candidate, descriptor)) {
@@ -1625,6 +1661,9 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	}
 
 	/**
+	 * 将candidateName加入到candidates中
+	 * 集合类型依赖：全部初始化为bean实例
+	 * 非集合类型依赖：如果已实例化，则返回缓存实例，如果未实例化，返回类型（防止非第一优先级依赖被进行不必要的提前初始化）
 	 * Add an entry to the candidate map: a bean instance if available or just the resolved
 	 * type, preventing early bean initialization ahead of primary candidate selection.
 	 */
@@ -1632,6 +1671,9 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			DependencyDescriptor descriptor, Class<?> requiredType) {
 
 		if (descriptor instanceof MultiElementDescriptor) {
+			/*
+			 * 集合类型（list、map、array等）依赖处理
+			 */
 			Object beanInstance = descriptor.resolveCandidate(candidateName, requiredType, this);
 			// list map等依赖多个的，只保留非空的
 			if (!(beanInstance instanceof NullBean)) {
@@ -1640,16 +1682,23 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		}
 		else if (containsSingleton(candidateName) || (descriptor instanceof StreamDependencyDescriptor &&
 				((StreamDependencyDescriptor) descriptor).isOrdered())) {
+			/*
+			 * 非集合类型处理（依赖bean已经初始化的情况）
+			 */
 			Object beanInstance = descriptor.resolveCandidate(candidateName, requiredType, this);
 			// 非list等，没有找到时直接给一个null
 			candidates.put(candidateName, (beanInstance instanceof NullBean ? null : beanInstance));
 		}
 		else {
+			/*
+			 * 非集合类型处理, 还未初始化，直接返回class
+			 */
 			candidates.put(candidateName, getType(candidateName));
 		}
 	}
 
 	/**
+	 * 在多个候选bean中确定一个
 	 * Determine the autowire candidate in the given set of beans.
 	 * <p>Looks for {@code @Primary} and {@code @Priority} (in that order).
 	 * @param candidates a Map of candidate names and candidate instances
@@ -1660,15 +1709,29 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	@Nullable
 	protected String determineAutowireCandidate(Map<String, Object> candidates, DependencyDescriptor descriptor) {
 		Class<?> requiredType = descriptor.getDependencyType();
+		/*
+		 * 获取isPrimary=true的
+		 * 		如果没有isPrimary=true的则返回null
+		 * 		如果有多个isPrimary=true的则抛异常
+		 */
 		String primaryCandidate = determinePrimaryCandidate(candidates, requiredType);
 		if (primaryCandidate != null) {
 			return primaryCandidate;
 		}
+
+		/*
+		 *  获取优先级最高的候选：
+		 * 		如果没有设置优先级的bean则返回null
+		 * 		如果有两个优先级相同的bean则抛异常
+		 */
 		String priorityCandidate = determineHighestPriorityCandidate(candidates, requiredType);
 		if (priorityCandidate != null) {
 			return priorityCandidate;
 		}
+
 		// Fallback
+		// 如果有resolvableDependencies中的实例，则直接返回
+		// 如果有beanName等于字段名或方法参数名的，则直接返回
 		for (Map.Entry<String, Object> entry : candidates.entrySet()) {
 			String candidateName = entry.getKey();
 			Object beanInstance = entry.getValue();
@@ -1715,6 +1778,9 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	}
 
 	/**
+	 * 返回优先级最高的候选：
+	 * 	如果没有设置优先级的bean则返回null
+	 * 	如果有两个优先级相同的bean则抛异常
 	 * Determine the candidate with the highest priority in the given set of beans.
 	 * <p>Based on {@code @javax.annotation.Priority}. As defined by the related
 	 * {@link org.springframework.core.Ordered} interface, the lowest value has
@@ -1738,6 +1804,9 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 				if (candidatePriority != null) {
 					if (highestPriorityBeanName != null) {
 						if (candidatePriority.equals(highestPriority)) {
+							/*
+							 * 有两个优先级相同的，抛异常
+							 */
 							throw new NoUniqueBeanDefinitionException(requiredType, candidates.size(),
 									"Multiple beans found with the same priority ('" + highestPriority +
 									"') among candidates: " + candidates.keySet());

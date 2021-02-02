@@ -271,6 +271,10 @@ public abstract class BeanFactoryUtils {
 		 * @see DefaultListableBeanFactory#getBeanNamesForType(java.lang.Class<?>, boolean, boolean)
 		 */
 		String[] result = lbf.getBeanNamesForType(type, includeNonSingletons, allowEagerInit);
+
+		/*从parent bean factory中查找
+		 *
+		 */
 		if (lbf instanceof HierarchicalBeanFactory) {
 			HierarchicalBeanFactory hbf = (HierarchicalBeanFactory) lbf;
 			if (hbf.getParentBeanFactory() instanceof ListableBeanFactory) {

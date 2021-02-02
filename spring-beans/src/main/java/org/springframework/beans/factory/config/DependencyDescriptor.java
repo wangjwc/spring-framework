@@ -33,6 +33,7 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.InjectionPoint;
 import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
+import org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor;
 import org.springframework.core.KotlinDetector;
 import org.springframework.core.MethodParameter;
 import org.springframework.core.ParameterNameDiscoverer;
@@ -241,6 +242,8 @@ public class DependencyDescriptor extends InjectionPoint implements Serializable
 	}
 
 	/**
+	 * 提供快捷解析能力，解析时先调用这个方法，如果获取到结果，则直接使用结果作为解析结果
+	 * 子类可以覆盖该方法，实现基于缓存的解析，以便提高解析性能（比如同样的参数已经解析过了，便可以直接使用缓存获取结果）
 	 * Resolve a shortcut for this dependency against the given factory, for example
 	 * taking some pre-resolved information into account.
 	 * <p>The resolution algorithm will first attempt to resolve a shortcut through this
@@ -251,6 +254,8 @@ public class DependencyDescriptor extends InjectionPoint implements Serializable
 	 * @return the shortcut result if any, or {@code null} if none
 	 * @throws BeansException if the shortcut could not be obtained
 	 * @since 4.3.1
+	 * @see AutowiredAnnotationBeanPostProcessor.ShortcutDependencyDescriptor
+	 * @see AutowiredAnnotationBeanPostProcessor.AutowiredFieldElement
 	 */
 	@Nullable
 	public Object resolveShortcut(BeanFactory beanFactory) throws BeansException {

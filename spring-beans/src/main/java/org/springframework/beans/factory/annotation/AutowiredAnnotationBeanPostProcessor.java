@@ -493,7 +493,7 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 
 			ReflectionUtils.doWithLocalFields(targetClass, field -> {
 				/*
-				 * 获取注解，优先级：@Autowired.class > @Value > @nject
+				 * 获取注解，优先级：@Autowired.class > @Value > @Inject
 				 */
 				MergedAnnotation<?> ann = findAutowiredAnnotation(field);
 				if (ann != null) {
@@ -698,6 +698,7 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 								String autowiredBeanName = autowiredBeanNames.iterator().next();
 								if (beanFactory.containsBean(autowiredBeanName) &&
 										beanFactory.isTypeMatch(autowiredBeanName, field.getType())) {
+									// ShortcutDependencyDescriptor，基于缓存的依赖描述，直接调用beanFactory.getBean从缓存获取依赖
 									this.cachedFieldValue = new ShortcutDependencyDescriptor(
 											desc, autowiredBeanName, field.getType());
 								}

@@ -82,12 +82,15 @@ public interface AutowireCandidateResolver {
 	}
 
 	/**
+	 * 给依赖返回一个默认值，默认返回null
 	 * Determine whether a default value is suggested for the given dependency.
 	 * <p>The default implementation simply returns {@code null}.
 	 * @param descriptor the descriptor for the target method parameter or field
 	 * @return the value suggested (typically an expression String),
 	 * or {@code null} if none found
 	 * @since 3.0
+	 *
+	 * support @Value
 	 * @see org.springframework.beans.factory.annotation.QualifierAnnotationAutowireCandidateResolver#getSuggestedValue
 	 */
 	@Nullable
