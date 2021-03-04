@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 the original author or authors.
+ * Copyright 2002-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,6 @@ import javax.servlet.http.HttpServletRequest;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.factory.BeanFactoryUtils;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.core.KotlinDetector;
 import org.springframework.core.MethodIntrospector;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -49,6 +48,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsUtils;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerMapping;
+import org.springframework.web.util.pattern.PathPatternParser;
 
 /**
  * Abstract base class for {@link HandlerMapping} implementations that define
@@ -99,6 +99,14 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 
 	private final MappingRegistry mappingRegistry = new MappingRegistry();
 
+
+	@Override
+	public void setPatternParser(PathPatternParser patternParser) {
+		Assert.state(this.mappingRegistry.getRegistrations().isEmpty(),
+				"PathPatternParser must be set before the initialization of " +
+						"request mappings through InitializingBean#afterPropertiesSet.");
+		super.setPatternParser(patternParser);
+	}
 
 	/**
 	 * Whether to detect handler methods in beans in ancestor ApplicationContexts.
@@ -282,6 +290,9 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 			if (logger.isTraceEnabled()) {
 				logger.trace(formatMappings(userType, methods));
 			}
+			else if (mappingsLogger.isDebugEnabled()) {
+				mappingsLogger.debug(formatMappings(userType, methods));
+			}
 			methods.forEach((method, mapping) -> {
 				Method invocableMethod = AopUtils.selectInvocableMethod(method, userType);
 				registerHandlerMethod(handler, invocableMethod, mapping);
@@ -399,20 +410,26 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 					logger.trace(matches.size() + " matching mappings: " + matches);
 				}
 				if (CorsUtils.isPreFlightRequest(request)) {
-					return PREFLIGHT_AMBIGUOUS_MATCH;
+					for (Match match : matches) {
+						if (match.hasCorsConfig()) {
+							return PREFLIGHT_AMBIGUOUS_MATCH;
+						}
+					}
 				}
-				Match secondBestMatch = matches.get(1);
-				if (comparator.compare(bestMatch, secondBestMatch) == 0) {
-					Method m1 = bestMatch.handlerMethod.getMethod();
-					Method m2 = secondBestMatch.handlerMethod.getMethod();
-					String uri = request.getRequestURI();
-					throw new IllegalStateException(
-							"Ambiguous handler methods mapped for '" + uri + "': {" + m1 + ", " + m2 + "}");
+				else {
+					Match secondBestMatch = matches.get(1);
+					if (comparator.compare(bestMatch, secondBestMatch) == 0) {
+						Method m1 = bestMatch.getHandlerMethod().getMethod();
+						Method m2 = secondBestMatch.getHandlerMethod().getMethod();
+						String uri = request.getRequestURI();
+						throw new IllegalStateException(
+								"Ambiguous handler methods mapped for '" + uri + "': {" + m1 + ", " + m2 + "}");
+					}
 				}
 			}
-			request.setAttribute(BEST_MATCHING_HANDLER_ATTRIBUTE, bestMatch.handlerMethod);
+			request.setAttribute(BEST_MATCHING_HANDLER_ATTRIBUTE, bestMatch.getHandlerMethod());
 			handleMatch(bestMatch.mapping, lookupPath, request);
-			return bestMatch.handlerMethod;
+			return bestMatch.getHandlerMethod();
 		}
 		else {
 			return handleNoMatch(this.mappingRegistry.getRegistrations().keySet(), lookupPath, request);
@@ -423,8 +440,7 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 		for (T mapping : mappings) {
 			T match = getMatchingMapping(mapping, request);
 			if (match != null) {
-				matches.add(new Match(match,
-						this.mappingRegistry.getRegistrations().get(mapping).getHandlerMethod()));
+				matches.add(new Match(match, this.mappingRegistry.getRegistrations().get(mapping)));
 			}
 		}
 	}
@@ -606,13 +622,6 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 		}
 
 		public void register(T mapping, Object handler, Method method) {
-			// Assert that the handler method is not a suspending one.
-			if (KotlinDetector.isKotlinType(method.getDeclaringClass())) {
-				Class<?>[] types = method.getParameterTypes();
-				if ((types.length > 0) && "kotlin.coroutines.Continuation".equals(types[types.length - 1].getName())) {
-					throw new IllegalStateException("Unsupported suspending handler method detected: " + method);
-				}
-			}
 			this.readWriteLock.writeLock().lock();
 			try {
 				HandlerMethod handlerMethod = createHandlerMethod(handler, method);
@@ -629,13 +638,14 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 					addMappingName(name, handlerMethod);
 				}
 
-				CorsConfiguration config = initCorsConfiguration(handler, method, mapping);
-				if (config != null) {
-					config.validateAllowCredentials();
-					this.corsLookup.put(handlerMethod, config);
+				CorsConfiguration corsConfig = initCorsConfiguration(handler, method, mapping);
+				if (corsConfig != null) {
+					corsConfig.validateAllowCredentials();
+					this.corsLookup.put(handlerMethod, corsConfig);
 				}
 
-				this.registry.put(mapping, new MappingRegistration<>(mapping, handlerMethod, directPaths, name));
+				this.registry.put(mapping,
+						new MappingRegistration<>(mapping, handlerMethod, directPaths, name, corsConfig != null));
 			}
 			finally {
 				this.readWriteLock.writeLock().unlock();
@@ -734,8 +744,10 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 		@Nullable
 		private final String mappingName;
 
+		private final boolean corsConfig;
+
 		public MappingRegistration(T mapping, HandlerMethod handlerMethod,
-				@Nullable Set<String> directPaths, @Nullable String mappingName) {
+				@Nullable Set<String> directPaths, @Nullable String mappingName, boolean corsConfig) {
 
 			Assert.notNull(mapping, "Mapping must not be null");
 			Assert.notNull(handlerMethod, "HandlerMethod must not be null");
@@ -743,6 +755,7 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 			this.handlerMethod = handlerMethod;
 			this.directPaths = (directPaths != null ? directPaths : Collections.emptySet());
 			this.mappingName = mappingName;
+			this.corsConfig = corsConfig;
 		}
 
 		public T getMapping() {
@@ -761,6 +774,10 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 		public String getMappingName() {
 			return this.mappingName;
 		}
+
+		public boolean hasCorsConfig() {
+			return this.corsConfig;
+		}
 	}
 
 
@@ -772,11 +789,19 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 
 		private final T mapping;
 
-		private final HandlerMethod handlerMethod;
+		private final MappingRegistration<T> registration;
 
-		public Match(T mapping, HandlerMethod handlerMethod) {
+		public Match(T mapping, MappingRegistration<T> registration) {
 			this.mapping = mapping;
-			this.handlerMethod = handlerMethod;
+			this.registration = registration;
+		}
+
+		public HandlerMethod getHandlerMethod() {
+			return this.registration.getHandlerMethod();
+		}
+
+		public boolean hasCorsConfig() {
+			return this.registration.hasCorsConfig();
 		}
 
 		@Override

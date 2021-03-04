@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 the original author or authors.
+ * Copyright 2002-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,12 +34,14 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.HandlerExecutionChain;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.util.ServletRequestPathUtils;
 import org.springframework.web.util.UrlPathHelper;
 import org.springframework.web.util.pattern.PathPattern;
+import org.springframework.web.util.pattern.PathPatternParser;
 
 /**
  * Abstract base class for URL-mapped {@link HandlerMapping} implementations.
@@ -72,6 +74,14 @@ public abstract class AbstractUrlHandlerMapping extends AbstractHandlerMapping i
 
 	private final Map<PathPattern, Object> pathPatternHandlerMap = new LinkedHashMap<>();
 
+
+	@Override
+	public void setPatternParser(PathPatternParser patternParser) {
+		Assert.state(this.handlerMap.isEmpty(),
+				"PathPatternParser must be set before the initialization of " +
+						"the handler map via ApplicationContextAware#setApplicationContext.");
+		super.setPatternParser(patternParser);
+	}
 
 	/**
 	 * Set the root handler for this handler mapping, that is,
@@ -145,7 +155,7 @@ public abstract class AbstractUrlHandlerMapping extends AbstractHandlerMapping i
 			// We need to care for the default handler directly, since we need to
 			// expose the PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE for it as well.
 			Object rawHandler = null;
-			if ("/".equals(lookupPath)) {
+			if (StringUtils.matchesCharacter(lookupPath, '/')) {
 				rawHandler = getRootHandler();
 			}
 			if (rawHandler == null) {
@@ -185,7 +195,7 @@ public abstract class AbstractUrlHandlerMapping extends AbstractHandlerMapping i
 		// Pattern match?
 		List<PathPattern> matches = null;
 		for (PathPattern pattern : this.pathPatternHandlerMap.keySet()) {
-			if (pattern.matches(path)) {
+			if (pattern.matches(path.pathWithinApplication())) {
 				matches = (matches != null ? matches : new ArrayList<>());
 				matches.add(pattern);
 			}
@@ -196,7 +206,7 @@ public abstract class AbstractUrlHandlerMapping extends AbstractHandlerMapping i
 		if (matches.size() > 1) {
 			matches.sort(PathPattern.SPECIFICITY_COMPARATOR);
 			if (logger.isTraceEnabled()) {
-				logger.debug("Matching patterns " + matches);
+				logger.trace("Matching patterns " + matches);
 			}
 		}
 		PathPattern pattern = matches.get(0);
@@ -206,7 +216,7 @@ public abstract class AbstractUrlHandlerMapping extends AbstractHandlerMapping i
 			handler = obtainApplicationContext().getBean(handlerName);
 		}
 		validateHandler(handler, request);
-		PathContainer pathWithinMapping = pattern.extractPathWithinPattern(path);
+		PathContainer pathWithinMapping = pattern.extractPathWithinPattern(path.pathWithinApplication());
 		return buildPathExposingHandler(handler, pattern.getPatternString(), pathWithinMapping.value(), null);
 	}
 

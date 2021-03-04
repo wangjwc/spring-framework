@@ -71,9 +71,9 @@ public class CorsRegistration {
 
 	/**
 	 * Set the HTTP methods to allow, e.g. {@code "GET"}, {@code "POST"}, etc.
-	 * The special value {@code "*"} allows all methods.
-	 * <p>By default "simple" methods, i.e. {@code GET}, {@code HEAD}, and
-	 * {@code POST} are allowed.
+	 * <p>The special value {@code "*"} allows all methods.
+	 * <p>By default "simple" methods {@code GET}, {@code HEAD}, and {@code POST}
+	 * are allowed.
 	 */
 	public CorsRegistration allowedMethods(String... methods) {
 		this.config.setAllowedMethods(Arrays.asList(methods));
@@ -81,9 +81,9 @@ public class CorsRegistration {
 	}
 
 	/**
-	 * Set the list of headers that a preflight request can list as allowed
-	 * for use during an actual request. The special value {@code "*"} may be
-	 * used to allow all headers.
+	 * Set the list of headers that a pre-flight request can list as allowed
+	 * for use during an actual request.
+	 * <p>The special value {@code "*"} may be used to allow all headers.
 	 * <p>A header name is not required to be listed if it is one of:
 	 * {@code Cache-Control}, {@code Content-Language}, {@code Expires},
 	 * {@code Last-Modified}, or {@code Pragma} as per the CORS spec.
@@ -99,7 +99,8 @@ public class CorsRegistration {
 	 * {@code Cache-Control}, {@code Content-Language}, {@code Content-Type},
 	 * {@code Expires}, {@code Last-Modified}, or {@code Pragma}, that an
 	 * actual response might have and can be exposed.
-	 * <p>Note that {@code "*"} is not supported on this property.
+	 * <p>The special value {@code "*"} allows all headers to be exposed for
+	 * non-credentialed requests.
 	 * <p>By default this is not set.
 	 */
 	public CorsRegistration exposedHeaders(String... headers) {
@@ -132,6 +133,18 @@ public class CorsRegistration {
 	 */
 	public CorsRegistration maxAge(long maxAge) {
 		this.config.setMaxAge(maxAge);
+		return this;
+	}
+
+	/**
+	 * Apply the given {@code CorsConfiguration} to the one being configured via
+	 * {@link CorsConfiguration#combine(CorsConfiguration)} which in turn has been
+	 * initialized with {@link CorsConfiguration#applyPermitDefaultValues()}.
+	 * @param other the configuration to apply
+	 * @since 5.3
+	 */
+	public CorsRegistration combine(CorsConfiguration other) {
+		this.config.combine(other);
 		return this;
 	}
 

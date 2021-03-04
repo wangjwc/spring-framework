@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 the original author or authors.
+ * Copyright 2002-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.net.ssl.SSLSession;
 
@@ -50,6 +51,9 @@ import org.springframework.util.StringUtils;
  */
 class UndertowServerHttpRequest extends AbstractServerHttpRequest {
 
+	private static final AtomicLong logPrefixIndex = new AtomicLong();
+
+
 	private final HttpServerExchange exchange;
 
 	private final RequestBodyPublisher body;
@@ -77,9 +81,11 @@ class UndertowServerHttpRequest extends AbstractServerHttpRequest {
 		return this.exchange.getRequestMethod().toString();
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	protected MultiValueMap<String, HttpCookie> initCookies() {
 		MultiValueMap<String, HttpCookie> cookies = new LinkedMultiValueMap<>();
+		// getRequestCookies() is deprecated in Undertow 2.2
 		for (String name : this.exchange.getRequestCookies().keySet()) {
 			Cookie cookie = this.exchange.getRequestCookies().get(name);
 			HttpCookie httpCookie = new HttpCookie(name, cookie.getValue());
@@ -123,7 +129,8 @@ class UndertowServerHttpRequest extends AbstractServerHttpRequest {
 
 	@Override
 	protected String initId() {
-		return ObjectUtils.getIdentityHexString(this.exchange.getConnection());
+		return ObjectUtils.getIdentityHexString(this.exchange.getConnection()) +
+				"-" + logPrefixIndex.incrementAndGet();
 	}
 
 

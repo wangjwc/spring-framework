@@ -250,7 +250,7 @@
 	By default, a SimpleAsyncTaskExecutor is used which does not re-use threads and is not recommended for production.
 
 	As of 5.0 this executor is also used when a controller returns a reactive type that does streaming
-	(e.g. "text/event-stream" or "application/stream+json") for the blocking writes to the
+	(e.g. "text/event-stream" or "application/x-ndjson") for the blocking writes to the
 	"javax.servlet.ServletOutputStream".
 
 								]]></xsd:documentation>
@@ -1400,6 +1400,7 @@
 	Comma-separated list of response headers other than simple headers (i.e.
 	Cache-Control, Content-Language, Content-Type, Expires, Last-Modified, Pragma) that an
 	actual response might have and can be exposed.
+	The special value "*" allows all headers to be exposed for non-credentialed requests.
 	Empty by default.
 								]]></xsd:documentation>
 							</xsd:annotation>
